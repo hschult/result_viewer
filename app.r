@@ -300,10 +300,10 @@ server <- function(input, output, session) {
   #switch colors one-/two-sided
   observe({
     
-    if (input$heat_distrib == "two-sided") {
+    
+    if (input$heat_distrib == "auto" & input$heat_mode != "raw" | input$heat_distrib == "two-sided") {
       updateSelectInput(session = session, inputId = "heat_color", choices = c("buwtrd", "rdblgr", "ylwtpu", "spectral"), selected = "spectral")
     }else{
-      #TODO
       updateSelectInput(session = session, inputId = "heat_color", choices = c("reds","viridis","plasma","inferno","magma", "blues", "heat", "cubehelix", "ylgnbu"), selected = "reds")
     }
   
