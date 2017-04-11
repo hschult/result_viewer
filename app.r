@@ -168,7 +168,7 @@ ui <- dashboardPage(
                          textInput("heat_unitlabel",label="Unit label",value = "Enter unit...")
                   ),
                   column(2,
-                         checkboxInput("heat_reverse",label="Reverse Coloring:",value = TRUE),
+                         checkboxInput("heat_reverse",label="Reverse Coloring:",value = FALSE),
                          br(),
                          checkboxInput("heat_rowlabel",label="Row Label",value = TRUE)
                   ),
@@ -291,7 +291,7 @@ server <- function(input, output, session) {
     
     #Function Call for Heatmap Plots
     #color_vector != null
-    create_complexheatmap(m=values_Heat,mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, optimize=T)
+    create_complexheatmap(m=values_Heat,mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, reverse_coloring=input$heat_reverse, optimize=T)
   
   }, height=900)
   

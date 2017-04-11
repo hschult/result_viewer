@@ -4,7 +4,7 @@
 #Functions
 
 
-create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, collabel=T, clustering='none', clustdist='auto', clustmethod='auto', distribution='auto', color_vector_onesided=NULL, color_vector_twosided=NULL, optimize=T)
+create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, collabel=T, clustering='none', clustdist='auto', clustmethod='auto', distribution='auto', color_vector_onesided=NULL, color_vector_twosided=NULL, reverse_coloring=FALSE, optimize=T)
 {
   ### subset of parameters available for complexheatmap:
   #name="legend"					#title of legend
@@ -53,6 +53,11 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
   } else {
     color_vector=heat_color(color_vector_onesided)
   }
+
+  if (reverse_coloring == TRUE){                  #reverse colorset
+    color_vector = reverse_coloring(color_vector)
+  }
+  
   message("distribution: ", distribution)
   color_vector_n=length(color_vector)					#number of colors in vector
   maxlimit=max
@@ -112,6 +117,10 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
   return(ht1)
 }
 
+
+
+# heat_color --------------------------------------------------------------
+
 heat_color <- function(palette){
   #get color palette for heatmap
   
@@ -132,6 +141,13 @@ heat_color <- function(palette){
         "ylwtpu" = ylwtpu,
         "spectral" = spectral
        )
+}
+
+
+# reverse_coloring --------------------------------------------------------
+
+reverse_coloring <- function(colors){
+  rev(colors)
 }
 
 #---------------------------------------------------------------------------
