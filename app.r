@@ -13,11 +13,12 @@ library(viridis)	#for color palettes
 library(rje)		#for color palettes
 library(gridExtra)
 library(plotly)
+library(getopt)
 
 
 
 source("helpers.R")
-
+#source("complexheatmap_single.r")
 
 
 #General part, done once
@@ -31,7 +32,6 @@ table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3.tsv", heade
 #table1=read.delim(file="data/normed_counts_orderd_development_ZB_Sven3.tsv",sep="\t",header=T,stringsAsFactors=T,row.names=1,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 reps=read.delim(file="data/reps.txt",sep="\t",header=F,stringsAsFactors=T,row.names=NULL,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 row.names(table1)=table1[,1]
-
 
 
 
@@ -286,12 +286,14 @@ server <- function(input, output, session) {
     values<-as.data.frame(table1[genes,])
     values_Heat<-values[,3:92]
     width=1
-
     
     
     #Function Call for Heatmap Plots
     #color_vector != null
     create_complexheatmap(m=values_Heat,mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, reverse_coloring=input$heat_reverse, optimize=T)
+    
+    ##single file | not working
+    #create_complexheatmap(m, mode = input$heat_mode, unitlabel = input$heat_unitlabel, rowlabel = input$heat_rowlabel, collabel = input$heat_columnlabel, clustering = input$heat_clustering, clustdist = input$heat_clusterdist)
   
   }, height=900)
   

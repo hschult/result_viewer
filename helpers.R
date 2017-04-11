@@ -30,6 +30,12 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
   #row_names_gp = gpar(fontsize=8)		#set row label font size
   
   ### transform matrix according to mode (log2, zscore), set special distance function for mode=zscore, create labels
+  if (mode == "zscore"){
+    m <- t(scale(t(m)))
+    
+  }else if (mode == "log2"){
+    m <- log2(m)
+  }
   
 
   
