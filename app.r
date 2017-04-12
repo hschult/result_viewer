@@ -28,10 +28,15 @@ source("helpers.R")
 #Load data
 
 
-table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3.tsv", header=TRUE, check.names=F)
+#table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3.tsv", header=TRUE, check.names=F)
+table1 <- read.delim("data/matrix_log2fc.txt", header = TRUE, check.names = FALSE)
 #table1=read.delim(file="data/normed_counts_orderd_development_ZB_Sven3.tsv",sep="\t",header=T,stringsAsFactors=T,row.names=1,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
-reps=read.delim(file="data/reps.txt",sep="\t",header=F,stringsAsFactors=T,row.names=NULL,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
-row.names(table1)=table1[,1]
+#reps=read.delim(file="data/reps.txt",sep="\t",header=F,stringsAsFactors=T,row.names=NULL,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
+
+#dynamic reps
+reps <- data.frame(V1 = sub("(.*)_\\d$", "\\1", colnames(table1)[3:ncol(table1)]), V2 = colnames(table1)[3:ncol(table1)])
+
+row.names(table1) <- table1[,1]
 
 
 
@@ -143,12 +148,11 @@ ui <- dashboardPage(
     ),
     #heatmap-----------------------------------------------------------------------
     #Main page for heatmap
-    
     tabItem(tabName = "heatmap",
             fluidRow(
               box(width=12,title="Inputs",id="heatmap_inputs",
                   column(2,
-                         selectInput("heat_select",label="Genes:",multiple=TRUE, choices = as.list(sort(unique(table1[,2]))), selected="slc35a5"),
+                         selectInput("heat_select",label="Genes:",multiple=TRUE, choices = as.list(sort(unique(table1[,2]))), selected=table1[1,2]),
                     br(),
                          selectInput("heat_mode",label="Data transformation:",c("raw","log2","zscore"),selected="condition")
                   ),
@@ -196,7 +200,7 @@ ui <- dashboardPage(
             fluidRow(
               box(width=12,title="Inputs",id="genview_inputs",
                   column(2,
-                  selectInput("gv_select",label="Genes:",multiple=TRUE, choices = as.list(sort(unique(table1[,2]))), selected="slc35a5")
+                  selectInput("gv_select",label="Genes:",multiple=TRUE, choices = as.list(sort(unique(table1[,2]))), selected= table1[1,2])
                   ),
                   column(2,
                   selectInput("gv_facet",label="Grouping:",c("condition","gene"),selected="condition")
@@ -242,12 +246,11 @@ ui <- dashboardPage(
 # Server --------------------------------------------------------------------
 
 server <- function(input, output, session) {
- 
    #genview-------------------------------------------------------------
   #Section genview
   
   output$table_genview<-renderDataTable({
-    genes_t<-table1[table1$symbol %in% input$gv_select,1]
+    genes_t<-table1[table1[[2]] %in% input$gv_select,1]
     values_t<-as.data.frame(table1[genes_t,])
     values_t
   },options=list(scrollX=TRUE))
@@ -264,9 +267,9 @@ server <- function(input, output, session) {
 
     
   output$plot_genview<-renderPlotly({
-    genes<-table1[table1$symbol %in% input$gv_select,1]
+    genes<-table1[table1[[2]] %in% input$gv_select,1]
     values<-as.data.frame(table1[genes,])
-    values2<-values[,3:92]
+    values2<-values[,3:ncol(table1)]
     width=1;
     #Function Call for Genview Plots
     x<-dynamic_matrixsplit(values2,reps, input$gv_plottype, input$gv_facet,input$gv_color,input$gv_cols, width,input$gv_height)
@@ -276,15 +279,15 @@ server <- function(input, output, session) {
   #heatmap-------------------------------------------------------------
   #Section heatmap
   output$table_heatmap<-renderDataTable({
-    genes_t<-table1[table1$symbol %in% input$heat_select,1]
+    genes_t<-table1[table1[[2]] %in% input$heat_select,1]
     values_t<-as.data.frame(table1[genes_t,])
     values_t
   },options=list(scrollX=TRUE))
   
   output$plot_heatmap<-renderPlot({
-    genes<-table1[table1$symbol %in% input$heat_select,1]
+    genes<-table1[table1[[2]] %in% input$heat_select,1]
     values<-as.data.frame(table1[genes,])
-    values_Heat<-values[,3:92]
+    values_Heat<-values[,3:ncol(table1)]
     width=1
     
     
@@ -300,7 +303,7 @@ server <- function(input, output, session) {
   #switch colors one-/two-sided
   observe({
     
-    
+    #what to do with 0 in data?
     if (input$heat_distrib == "auto" & input$heat_mode != "raw" | input$heat_distrib == "two-sided") {
       updateSelectInput(session = session, inputId = "heat_color", choices = c("buwtrd", "rdblgr", "ylwtpu", "spectral"), selected = "spectral")
     }else{
