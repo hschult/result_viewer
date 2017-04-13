@@ -162,11 +162,7 @@ ui <- dashboardPage(
                          selectInput("heat_color",label="Color Type:",c("reds","viridis","plasma","inferno","magma", "blues", "heat", "cubehelix", "ylgnbu"),selected="BrBG")
                   ),
                   column(2,
-<<<<<<< HEAD
                          selectInput("heat_clustering",label="Clustering",c("none", "row", "column", "both"), selected="none"), #both
-=======
-                         selectInput("heat_clustering",label="Clustering",c("none", "row", "column", "both"), selected="both"), #both
->>>>>>> d5d2cadabeba133f838e765ef2a6d3a481daccb2
                          br(),
                          selectInput("heat_clusterdist",label="Cluster Distance",c("euclidean", "pearson", "spearman", "kendall", "maximum", "manhattan", "canberra", "binary", "minkowski"), selected="manhattan")
                   ),
@@ -181,11 +177,7 @@ ui <- dashboardPage(
                          checkboxInput("heat_rowlabel",label="Row Label",value = T) #true
                   ),
                   column(2,
-<<<<<<< HEAD
                          checkboxInput("heat_columnlabel",label="Column Label",value = F) #true
-=======
-                         checkboxInput("heat_columnlabel",label="Column Label",value = T) #true
->>>>>>> d5d2cadabeba133f838e765ef2a6d3a481daccb2
                   )
               )
             ),
@@ -312,17 +304,10 @@ server <- function(input, output, session) {
     print(plot)
     dev.off()
     
-<<<<<<< HEAD
     list(src = outfile)
     ##single file | not working
     #create_complexheatmap(m, mode = input$heat_mode, unitlabel = input$heat_unitlabel, rowlabel = input$heat_rowlabel, collabel = input$heat_columnlabel, clustering = input$heat_clustering, clustdist = input$heat_clusterdist)
   })#, height = 500 )
-=======
-    
-    ##single file | not working
-    #create_complexheatmap(m, mode = input$heat_mode, unitlabel = input$heat_unitlabel, rowlabel = input$heat_rowlabel, collabel = input$heat_columnlabel, clustering = input$heat_clustering, clustdist = input$heat_clusterdist)
-  }, height = 500 )
->>>>>>> d5d2cadabeba133f838e765ef2a6d3a481daccb2
   
   #switch colors one-/two-sided
   observe({
