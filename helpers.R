@@ -34,6 +34,7 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
     m <- t(scale(t(m)))
     
   }else if (mode == "log2"){
+    m <- m + 1
     m <- log2(m)
   }
   
@@ -107,13 +108,21 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
                 show_column_names=collabel,
                 row_names_side="right",
                 row_dend_side="left",
-                row_dend_width=unit(1,"inches"),
-                column_dend_height=unit(1,"inches"),
-                row_names_max_width=unit(8,"inches"),
-                column_names_max_height=unit(4,"inches"),
-                #row_names_gp=gpar(fontsize=12),
-                #column_names_gp=gpar(fontsize=12),
-                #width=unit(3,"inches"),
+                row_dend_width= unit(1,"inches"),
+                column_dend_height= unit(1,"inches"),
+                row_names_max_width= unit(8,"inches"),
+                column_names_max_height= unit(4,"inches"),
+                row_names_gp=gpar(fontsize=12),
+                column_names_gp=gpar(fontsize=12),
+                #show_heatmap_legend = F,
+                #raster_device = "png",
+                #width=unit({
+                #  0.5*ncol(m)
+                #}, "cm"),
+                #rect_gp = gpar(lineheight = 50, lwd = NA),
+                #cell_fun = function(j, i, x, y, width, height, fill){
+                #  grid.rect(x = x, y = y, width = width, height = height*0.5, gp = gpar(fill = fill, col = NA))
+                #  }, 
                 heatmap_legend_param=list(
                   color_bar="continuous", 			#continuous, discrete
                   legend_direction="horizontal"			#horizontal, vertical
@@ -122,7 +131,6 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
   
   return(ht1)
 }
-
 
 
 # heat_color --------------------------------------------------------------
@@ -154,6 +162,54 @@ heat_color <- function(palette){
 
 reverse_coloring <- function(colors){
   rev(colors)
+}
+
+
+# heatmap_size ------------------------------------------------------------
+
+heatmap_size <- function(data, row_label = T, column_label = T, clustering){
+  col_names_maxlength_label_width=max(sapply(colnames(data),strwidth, units="in", font=12))	#longest column label when plotted in inches	
+  col_names_maxlength_label_height=max(sapply(colnames(data),strheight, units="in", font=12))	#highest column label when plotted in inches	
+  row_names_maxlength_label_width=max(sapply(rownames(data),strwidth, units="in", font=12))	#longest row label when plotted in inches	
+  row_names_maxlength_label_height=max(sapply(rownames(data),strheight, units="in", font=12))	#highest row label when plotted in inches
+  col_count <- ncol(data)
+  row_count <- nrow(data)
+  
+  message("colWidth: ", col_names_maxlength_label_width)
+  message("colheight: ", col_names_maxlength_label_height)
+  
+  #unit: inches
+  width <- 0
+  height <- 0.15
+  
+  #legend
+  width <- width + 1
+  
+  #labels
+  if(row_label == TRUE){
+    width <- width + row_names_maxlength_label_width + 0.09
+  }
+  if(column_label == TRUE){
+    height <- height + col_names_maxlength_label_width
+  }
+  
+  #clustering c("none", "row", "column", "both")
+  if(clustering == "row"){
+    width <- width + 1
+  }else if(clustering == "column"){
+    height <- height + 1
+  }else if(clustering == "both"){
+    width <- width + 1
+    height <- height + 1
+  }
+  
+  #entries
+  width <- width + col_count * (col_names_maxlength_label_height + 0.06)
+  height <- height + row_count * (row_names_maxlength_label_height + 0.08)
+  
+  message("width: ", width)
+  message("height: ", height)
+  return(c(width, height))
 }
 
 #---------------------------------------------------------------------------
