@@ -34,6 +34,7 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
     m <- t(scale(t(m)))
     
   }else if (mode == "log2"){
+    m <- m + 1
     m <- log2(m)
   }
   
@@ -111,18 +112,23 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
                 column_dend_height=unit(1,"inches"),
                 row_names_max_width=unit(8,"inches"),
                 column_names_max_height=unit(4,"inches"),
-                #row_names_gp=gpar(fontsize=12),
-                #column_names_gp=gpar(fontsize=12),
-                #width=unit(3,"inches"),
+                row_names_gp=gpar(fontsize=12),
+                column_names_gp=gpar(fontsize=12),
+                #width=unit({
+                #  0.5*ncol(m)
+                #}, "cm"),
+                rect_gp = gpar(lineheight = 50, lwd = NA),
+                #cell_fun = function(j, i, x, y, width, height, fill){
+                #  grid.rect(x = x, y = y, width = width, height = height*0.5, gp = gpar(fill = fill, col = NA))
+                #  }, 
                 heatmap_legend_param=list(
                   color_bar="continuous", 			#continuous, discrete
                   legend_direction="horizontal"			#horizontal, vertical
                 )
   )
   
-  return(ht1)
+  return(png(ht1))
 }
-
 
 
 # heat_color --------------------------------------------------------------

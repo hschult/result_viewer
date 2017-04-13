@@ -13,7 +13,7 @@ library(viridis)	#for color palettes
 library(rje)		#for color palettes
 library(gridExtra)
 library(plotly)
-library(getopt)
+library(getopt) #for complexheatmap_single.r
 
 
 
@@ -28,8 +28,8 @@ source("helpers.R")
 #Load data
 
 
-#table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3.tsv", header=TRUE, check.names=F)
-table1 <- read.delim("data/matrix_log2fc.txt", header = TRUE, check.names = FALSE)
+table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3.tsv", header=TRUE, check.names=F)
+#table1 <- read.delim("data/matrix_log2fc.txt", header = TRUE, check.names = FALSE)
 #table1=read.delim(file="data/normed_counts_orderd_development_ZB_Sven3.tsv",sep="\t",header=T,stringsAsFactors=T,row.names=1,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 #reps=read.delim(file="data/reps.txt",sep="\t",header=F,stringsAsFactors=T,row.names=NULL,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 
@@ -95,7 +95,7 @@ ui <- dashboardPage(
       
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart")),
-        menuItem("Heatmap", tabName = "heatmap", icon = icon("th")),
+        menuItem("Heatmap", tabName = "heatmap", icon = icon("th"), selected = TRUE), # selected needs to be removed
         menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
@@ -162,7 +162,7 @@ ui <- dashboardPage(
                          selectInput("heat_color",label="Color Type:",c("reds","viridis","plasma","inferno","magma", "blues", "heat", "cubehelix", "ylgnbu"),selected="BrBG")
                   ),
                   column(2,
-                         selectInput("heat_clustering",label="Clustering",c("none", "row", "column", "both"), selected="both"),
+                         selectInput("heat_clustering",label="Clustering",c("none", "row", "column", "both"), selected="both"), #both
                          br(),
                          selectInput("heat_clusterdist",label="Cluster Distance",c("euclidean", "pearson", "spearman", "kendall", "maximum", "manhattan", "canberra", "binary", "minkowski"), selected="manhattan")
                   ),
@@ -174,10 +174,10 @@ ui <- dashboardPage(
                   column(2,
                          checkboxInput("heat_reverse",label="Reverse Coloring:",value = FALSE),
                          br(),
-                         checkboxInput("heat_rowlabel",label="Row Label",value = TRUE)
+                         checkboxInput("heat_rowlabel",label="Row Label",value = T) #true
                   ),
                   column(2,
-                         checkboxInput("heat_columnlabel",label="Column Label",value = TRUE)
+                         checkboxInput("heat_columnlabel",label="Column Label",value = T) #true
                   )
               )
             ),
@@ -278,10 +278,10 @@ server <- function(input, output, session) {
   
   #heatmap-------------------------------------------------------------
   #Section heatmap
+  source("helpers.R")  #removed in future
   output$table_heatmap<-renderDataTable({
     genes_t<-table1[table1[[2]] %in% input$heat_select,1]
     values_t<-as.data.frame(table1[genes_t,])
-    values_t
   },options=list(scrollX=TRUE))
   
   output$plot_heatmap<-renderPlot({
@@ -295,19 +295,30 @@ server <- function(input, output, session) {
     #color_vector != null
     create_complexheatmap(m=values_Heat,mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, reverse_coloring=input$heat_reverse, optimize=T)
     
+    
     ##single file | not working
     #create_complexheatmap(m, mode = input$heat_mode, unitlabel = input$heat_unitlabel, rowlabel = input$heat_rowlabel, collabel = input$heat_columnlabel, clustering = input$heat_clustering, clustdist = input$heat_clusterdist)
-  
-  }, height=900)
+  }, height = 500 )
   
   #switch colors one-/two-sided
   observe({
-    
-    #what to do with 0 in data?
     if (input$heat_distrib == "auto" & input$heat_mode != "raw" | input$heat_distrib == "two-sided") {
       updateSelectInput(session = session, inputId = "heat_color", choices = c("buwtrd", "rdblgr", "ylwtpu", "spectral"), selected = "spectral")
+      
+      #change label
+      if(input$heat_mode == "zscore"){
+        updateTextInput(session = session, inputId = "heat_unitlabel", value = "zscore")
+      }else if(input$heat_mode == "log2"){
+        updateTextInput(session = session, inputId = "heat_unitlabel", value = "log2")
+      }
+      
     }else{
       updateSelectInput(session = session, inputId = "heat_color", choices = c("reds","viridis","plasma","inferno","magma", "blues", "heat", "cubehelix", "ylgnbu"), selected = "reds")
+      
+      #change label
+      if(input$heat_mode == "raw"){
+        updateTextInput(session = session, inputId = "heat_unitlabel", value = "Enter unit...")
+      }
     }
   
   })
