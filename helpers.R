@@ -175,8 +175,8 @@ heatmap_size <- function(data, row_label = T, column_label = T, clustering){
   col_count <- ncol(data)
   row_count <- nrow(data)
   
-  message("colWidth: ", col_names_maxlength_label_width)
-  message("colheight: ", col_names_maxlength_label_height)
+  #message("colWidth: ", col_names_maxlength_label_width)
+  #message("colheight: ", col_names_maxlength_label_height)
   
   #unit: inches
   width <- 0
