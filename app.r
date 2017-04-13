@@ -162,7 +162,7 @@ ui <- dashboardPage(
                          selectInput("heat_color",label="Color Type:",c("reds","viridis","plasma","inferno","magma", "blues", "heat", "cubehelix", "ylgnbu"),selected="BrBG")
                   ),
                   column(2,
-                         selectInput("heat_clustering",label="Clustering",c("none", "row", "column", "both"), selected="none"), #both
+                         selectInput("heat_clustering",label="Clustering",c("none", "row", "column", "both"), selected="both"), #both
                          br(),
                          selectInput("heat_clusterdist",label="Cluster Distance",c("euclidean", "pearson", "spearman", "kendall", "maximum", "manhattan", "canberra", "binary", "minkowski"), selected="manhattan")
                   ),
@@ -177,7 +177,7 @@ ui <- dashboardPage(
                          checkboxInput("heat_rowlabel",label="Row Label",value = T) #true
                   ),
                   column(2,
-                         checkboxInput("heat_columnlabel",label="Column Label",value = F) #true
+                         checkboxInput("heat_columnlabel",label="Column Label",value = T) #true
                   )
               )
             ),
