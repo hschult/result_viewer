@@ -290,10 +290,12 @@ server <- function(input, output, session) {
     values_Heat<-values[,3:ncol(table1)]
 
     #z must be matrix!
-    p <- plot_ly(x = colnames(values_Heat), y = rownames(values_Heat), z = as.matrix(values_Heat), type = "heatmap")
+    #p <- plot_ly(x = colnames(values_Heat), y = rownames(values_Heat), z = as.matrix(values_Heat), type = "heatmap")
     ##single file | not working
     #create_complexheatmap(m, mode = input$heat_mode, unitlabel = input$heat_unitlabel, rowlabel = input$heat_rowlabel, collabel = input$heat_columnlabel, clustering = input$heat_clustering, clustdist = input$heat_clusterdist)
-  })#, height = 500 )
+    
+    p <- create_plotly(data = values_Heat, mode = input$heat_mode, color_vector = input$heat_color)
+  })
   
   #switch colors one-/two-sided
   observe({

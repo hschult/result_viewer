@@ -132,8 +132,54 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
   return(ht1)
 }
 
-
-
+# plotly --------------------------------------------------------------
+#m, mode="raw", unitlabel='auto', rowlabel=T, collabel=T, clustering='none', clustdist='auto', clustmethod='auto', distribution='auto', color_vector_onesided=NULL, color_vector_twosided=NULL, reverse_coloring=FALSE, optimize=T)
+create_plotly <- function(data, mode = "raw", unitlabel="auto", rowlabel=T, collabel=T, clustering="none", clustdist="auto", clustmethod="auto", distribution="auto", color_vector=NULL, reverse_coloring=F, type = "heatmap"){
+  #transformation
+  if (mode == "zscore"){
+    data <- t(scale(t(data)))
+    
+  }else if (mode == "log2"){
+    data <- data + 1
+    data <- log2(data)
+  }
+  
+  
+  ### mapping of colors to min/max value depending on distribution type (one- or two-sided)
+  min=min(data)
+  #absmin=abs(min(data))
+  max=max(data)
+  #absmax=abs(max(data))
+  #totalmax=max(absmax, absmin)
+  #message(paste("value min: ", min, sep="\t"))
+  #message(paste("value max: ", max, sep="\t"))
+  if (distribution=='auto') {
+    if (min<0 && max>0) {						#two-sided distribution: eg. zscore, log2fc
+      distribution='two-sided'
+    } else {							#one-sided distribution: eg. count, log2 count
+      distribution='one-sided'
+    }
+  }
+  color_vector=heat_color(color_vector)
+  
+  message("distribution: ", distribution)
+  #color_vector_n=length(color_vector)					#number of colors in vector
+  #maxlimit=max
+  #minlimit=min
+  #if (distribution=='two-sided'){				#try to create better color breaks (identical min/max for two-sided, reasonable rounding)
+  #  maxlimit=max(absmax, absmin)
+  #  minlimit=-maxlimit
+  #}		
+  #breaks=seq(minlimit,maxlimit,length=color_vector_n)#one break point for each color; even distribution between min/max
+  #message(paste("breaks min: ", minlimit, sep="\t"))
+  #message(paste("breaks max: ", maxlimit, sep="\t"))
+  col_fun=colorRamp(color_vector)					#create color mapping function to fix limits/breaks
+  
+  #plot
+  p <- plot_ly(x = colnames(data), y = rownames(data), z = as.matrix(data), type = type, colors = col_fun)
+  
+  return(p)
+}
 
 # heat_color --------------------------------------------------------------
 
