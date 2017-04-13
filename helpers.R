@@ -108,6 +108,7 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
                 show_column_names=collabel,
                 row_names_side="right",
                 row_dend_side="left",
+<<<<<<< HEAD
                 row_dend_width= unit(1,"inches"),
                 column_dend_height= unit(1,"inches"),
                 row_names_max_width= unit(8,"inches"),
@@ -120,6 +121,18 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
                 #  0.5*ncol(m)
                 #}, "cm"),
                 #rect_gp = gpar(lineheight = 50, lwd = NA),
+=======
+                row_dend_width=unit(1,"inches"),
+                column_dend_height=unit(1,"inches"),
+                row_names_max_width=unit(8,"inches"),
+                column_names_max_height=unit(4,"inches"),
+                row_names_gp=gpar(fontsize=12),
+                column_names_gp=gpar(fontsize=12),
+                #width=unit({
+                #  0.5*ncol(m)
+                #}, "cm"),
+                rect_gp = gpar(lineheight = 50, lwd = NA),
+>>>>>>> d5d2cadabeba133f838e765ef2a6d3a481daccb2
                 #cell_fun = function(j, i, x, y, width, height, fill){
                 #  grid.rect(x = x, y = y, width = width, height = height*0.5, gp = gpar(fill = fill, col = NA))
                 #  }, 
@@ -129,7 +142,7 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
                 )
   )
   
-  return(ht1)
+  return(png(ht1))
 }
 
 
