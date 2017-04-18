@@ -125,7 +125,7 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
                 #  }, 
                 heatmap_legend_param=list(
                   color_bar="continuous", 			#continuous, discrete
-                  legend_direction="horizontal"			#horizontal, vertical
+                  legend_direction="vertical"			#horizontal, vertical
                 )
   )
   
@@ -194,16 +194,17 @@ heatmap_size <- function(data, row_label = T, column_label = T, clustering){
   }
   
   #clustering c("none", "row", "column", "both")
-  if(clustering == "row"){
-    width <- width + 1
-  }else if(clustering == "column"){
+  if(clustering == "row" && row_count > 1){
+    width <- width + 2
+  }else if(clustering == "column" && col_count > 1){
     height <- height + 1
   }else if(clustering == "both"){
-    width <- width + 1
-    height <- height + 1
+    if(row_count > 1){width <- width + 2}
+    if(col_count > 1){height <- height + 1}
   }
   
   #entries
+  
   width <- width + col_count * (col_names_maxlength_label_height + 0.06)
   height <- height + row_count * (row_names_maxlength_label_height + 0.08)
   

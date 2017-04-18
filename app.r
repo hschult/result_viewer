@@ -294,7 +294,7 @@ server <- function(input, output, session) {
     genes<-table1[table1[[2]] %in% input$heat_select_row,1]
     #get selected columns
     cols <- c(colnames(table1)[1:2], input$heat_select_col)
-    message(print(cols))
+    
     values<-as.data.frame(table1[genes,cols])
   })
   
