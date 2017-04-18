@@ -152,9 +152,12 @@ ui <- dashboardPage(
             fluidRow(
               box(width=12,title="Inputs",id="heatmap_inputs",
                   column(2,
-                         selectInput("heat_select",label="Genes:",multiple=TRUE, choices = as.list(sort(unique(table1[,2]))), selected=table1[1,2]),
+                         selectInput("heat_select_row",label="Genes:",multiple=TRUE, choices = as.list(sort(unique(table1[,2]))), selected=table1[1,2]),
                     br(),
                          selectInput("heat_mode",label="Data transformation:",c("raw","log2","zscore"),selected="condition")
+                  ),
+                  column(2,
+                         selectInput("heat_select_col", label="Columns:", multiple = T, choices = as.list(sort(unique(colnames(table1)[3:ncol(table1)]))), selected = colnames(table1)[c(3,4)])
                   ),
                   column(2,
                          selectInput("heat_distrib",label="Data distribution",c("auto","one-sided","two-sided"), selected="auto"),
@@ -171,12 +174,12 @@ ui <- dashboardPage(
                          br(),
                          textInput("heat_unitlabel",label="Unit label",value = "Enter unit...")
                   ),
-                  column(2,
+                  column(1,
                          checkboxInput("heat_reverse",label="Reverse Coloring:",value = FALSE),
                          br(),
                          checkboxInput("heat_rowlabel",label="Row Label",value = T) #true
                   ),
-                  column(2,
+                  column(1,
                          checkboxInput("heat_columnlabel",label="Column Label",value = T) #true
                   )
               )
@@ -280,14 +283,19 @@ server <- function(input, output, session) {
   #Section heatmap
   source("helpers.R")  #removed in future
   output$table_heatmap<-renderDataTable({
-    genes_t<-table1[table1[[2]] %in% input$heat_select,1]
+    genes_t<-table1[table1[[2]] %in% input$heat_select_row,1]
     values_t<-as.data.frame(table1[genes_t,])
   },options=list(scrollX=TRUE))
   
   output$plot_heatmap<-renderImage({
-    genes<-table1[table1[[2]] %in% input$heat_select,1]
-    values<-as.data.frame(table1[genes,])
-    values_Heat<-values[,3:ncol(table1)]
+    #get selected rows (genes)
+    genes<-table1[table1[[2]] %in% input$heat_select_row,1]
+    #get selected columns
+    cols <- input$heat_select_col
+    
+    values<-as.data.frame(table1[genes,cols])
+    #values <- values[cols]
+    values_Heat<-values
 
     
     #test_matrix <- matrix(data = 1:9, 3, 3)
