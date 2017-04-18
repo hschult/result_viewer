@@ -184,7 +184,8 @@ ui <- dashboardPage(
                   ),
                   fluidRow(
                     column(12,
-                           actionButton(inputId = "heat_plot", label="Plot", color = "blue")
+                           actionButton(inputId = "heat_plot", label="Plot",
+                                        style = "color: #fff; background-color: #3c8dbc")
                            )
                   )
               )
