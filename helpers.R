@@ -575,3 +575,96 @@ col15=colorRampPalette(c("royalblue3","steelblue3","white","indianred3","firebri
 
 categories_nr=0
 
+
+# Scatterplot -------------------------------------------------------------
+
+create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = F, maxaxis = NULL){
+  x_head <- colnames(data[3])
+  y_head <- colnames(data[4])
+  category_head <- colnames(data[2])
+  print(data)
+  
+  #delete rows where both 0
+  data <- data[!data[,3] == 0 && !data[,4] == 0]
+  
+  #round data to Integer
+  if(round == TRUE){ 
+    data[,3:4] <- round(data[,3:4])
+  }
+  #log10
+  if(log10 == TRUE){
+    data[,3:4] <- log10(data[,3:4])
+  }
+  
+  #autoscale axis
+  #if(is.null(maxaxis)){
+  #  maxcolcounts <- apply(data[,3:4], 2, max)
+  #  maxaxis <- ceiling(max(maxcolcounts, na.rm = T))
+  #}
+  
+  #replace inf->NA->0
+  is.na(data) <- sapply(data, is.infinite)
+  data[is.na(data)] <- 0 
+  
+  theme1 <- theme (											#no gray background or helper lines
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line.x = element_line(size=.3),
+    axis.line.y = element_line(size=.3),
+    axis.title.x = element_text(face="bold", color="black", size=10),
+    axis.title.y = element_text(face="bold", color="black", size=10),
+    plot.title = element_text(face="bold", color="black", size=12)
+    #		legend.background = element_rect(color = "red")			#border color
+    #		legend.key = element_rect("green")						#not working!
+  )
+  
+  ggplot(data = data, aes(x = data[[3]],y = data[[4]], color = symbol)) + geom_point() + theme1 +
+  ### binhex
+  #		stat_binhex(bins=30) + 								
+  #		scale_fill_gradientn(colours=c("white","black")) + 
+  
+  ### kernel density
+  #stat_density2d(geom="tile", aes(fill=..density..), n=200, contour=FALSE) +		#n=resolution; density more sparse
+  stat_density2d(geom="tile", aes(fill=..density..^0.25), n=200, contour=FALSE) +	#n=resolution; density less sparse
+    scale_fill_gradient(low="white", high="black") +
+    
+    
+    ### legend title 2 (move to the bottom to change order of legends)
+    #guides(fill=FALSE) +		#remove density legend
+    labs(fill="Density") +
+    
+    ### points colored by category
+    geom_point(size=pointsize, alpha=transparency, aes(dt[,eval(x_head)], dt[,eval(y_head)], color=dt[,eval(category_head)])) + 
+    scale_color_manual (
+      #labels = categories,
+      values = colors,
+      drop=FALSE,								#to avoid dropping empty factors
+      name = "Category"
+      #			guide=guide_legend(title="sdsds" )					#legend for points
+    ) +
+    
+    ### smooth curve
+    #		geom_smooth(method="loess", se=FALSE, color="black") +				#se=display confidence interval (shaded area)
+    #		geom_smooth(method="loess", se=FALSE) +				#se=display confidence interval (shaded area)
+    
+    
+    ### diagonal line
+    geom_abline(intercept=0, slope=1)# + 
+    
+    
+    ### additional density plot at x and y axis
+    #		geom_rug(col="darkred", alpha=.1) +						#density plot at x and y axis
+    
+    
+    ### axis range and labels
+    #xlim(0, maxaxis) +								#set x axis limits
+    #ylim(0, maxaxis) +								#set y axis limits
+    #xlab(eval(x_head)) +								#axis labels
+    #ylab(eval(y_head)) 
+  
+  #		guides(fill =guide_legend(keywidth=3, keyheight=1))				#legend for density
+}
+

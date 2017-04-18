@@ -93,9 +93,9 @@ ui <- dashboardPage(
     sidebarMenu(
       div(img(src="icon.png", height = 70, width = 70),em("Bioinformatics Core Unit")),
       
-        menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
-        menuItem("Scatters", tabName = "scatter", icon = icon("area-chart")),
-        menuItem("Heatmap", tabName = "heatmap", icon = icon("th"), selected = TRUE), # selected needs to be removed
+        menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
+        menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), selected = TRUE),# selected needs to be removed
+        menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
         menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
@@ -132,11 +132,17 @@ ui <- dashboardPage(
             fluidRow(
               box(width=12,title="Inputs",id="scatter_inputs",
                   column(4,
-                         selectInput("scatter_xaxis",label="X axis:", choices = names(table1), selected="zygote_1")
+                         textInput(inputId = "scatter_X_label", label = "X axis label", placeholder = "Unit"),
+                         selectInput("scatter_xaxis",label="X axis:", choices = names(table1), selected=names(table1)[3])
                   ),
                   column(4,
-                         selectInput("scatter_yaxis",label="Y axis:",choices = names(table1), selected="zygote_2")
-                  )
+                         textInput(inputId = "scatter_y_label", label = "Y axis label", placeholder = "Unit"),
+                         selectInput("scatter_yaxis",label="Y axis:",choices = names(table1), selected=names(table1)[4])
+                  ),
+                  column(4,
+                         checkboxInput(inputId = "scatter_round", label = "Round to Integer",value = F),
+                         checkboxInput(inputId = "scatter_log10", label = "log10", value = F)
+                         )
               )
             ),
             
@@ -287,7 +293,6 @@ server <- function(input, output, session) {
   
   #heatmap-------------------------------------------------------------
   #Section heatmap
-  source("helpers.R")  #removed in future
   
   #get selected data
   dataInput <- reactive({
@@ -356,13 +361,17 @@ server <- function(input, output, session) {
     
   #scatter-------------------------------------------------------------
   #Section scatter
+  source("helpers.R")
   
   output$plot_scatter<-renderPlot({
-    selectedData <- table1[, c(input$scatter_xaxis, input$scatter_yaxis)]
-    write.csv(selectedData,file="test.txt")
-      
+    selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_xaxis, input$scatter_yaxis)]
+
+    #write.csv(selectedData,file="test.txt")
+    #message(print(selectedData))
     
-    ggplot(table1,aes(x=input$scatter_xaxis,y=input$scatter_yaxis)) + geom_point() 
+    create_scatterplot(selectedData, input$scatter_round, input$scatter_log10)
+    
+    #ggplot(table1,aes(x=input$scatter_xaxis,y=input$scatter_yaxis))# + geom_point() 
     
   }, height=400)
 }
