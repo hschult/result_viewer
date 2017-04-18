@@ -13,7 +13,7 @@ library(viridis)	#for color palettes
 library(rje)		#for color palettes
 library(gridExtra)
 library(plotly)
-library(getopt)
+library(getopt) #for complexheatmap_single.r
 
 
 
@@ -28,8 +28,8 @@ source("helpers.R")
 #Load data
 
 
-#table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3.tsv", header=TRUE, check.names=F)
-table1 <- read.delim("data/matrix_log2fc.txt", header = TRUE, check.names = FALSE)
+table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3.tsv", header=TRUE, check.names=F)
+#table1 <- read.delim("data/matrix_log2fc.txt", header = TRUE, check.names = FALSE)
 #table1=read.delim(file="data/normed_counts_orderd_development_ZB_Sven3.tsv",sep="\t",header=T,stringsAsFactors=T,row.names=1,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 #reps=read.delim(file="data/reps.txt",sep="\t",header=F,stringsAsFactors=T,row.names=NULL,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 
@@ -95,7 +95,7 @@ ui <- dashboardPage(
       
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart")),
-        menuItem("Heatmap", tabName = "heatmap", icon = icon("th")),
+        menuItem("Heatmap", tabName = "heatmap", icon = icon("th"), selected = TRUE), # selected needs to be removed
         menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
@@ -152,9 +152,12 @@ ui <- dashboardPage(
             fluidRow(
               box(width=12,title="Inputs",id="heatmap_inputs",
                   column(2,
-                         selectInput("heat_select",label="Genes:",multiple=TRUE, choices = as.list(sort(unique(table1[,2]))), selected=table1[1,2]),
+                         selectInput("heat_select_row",label="Genes:",multiple=TRUE, choices = as.list(sort(unique(table1[,2]))), selected=table1[1,2]),
                     br(),
                          selectInput("heat_mode",label="Data transformation:",c("raw","log2","zscore"),selected="condition")
+                  ),
+                  column(2,
+                         selectInput("heat_select_col", label="Columns:", multiple = T, choices = as.list(sort(unique(colnames(table1)[3:ncol(table1)]))), selected = colnames(table1)[c(3,4)])
                   ),
                   column(2,
                          selectInput("heat_distrib",label="Data distribution",c("auto","one-sided","two-sided"), selected="auto"),
@@ -162,7 +165,7 @@ ui <- dashboardPage(
                          selectInput("heat_color",label="Color Type:",c("reds","viridis","plasma","inferno","magma", "blues", "heat", "cubehelix", "ylgnbu"),selected="BrBG")
                   ),
                   column(2,
-                         selectInput("heat_clustering",label="Clustering",c("none", "row", "column", "both"), selected="both"),
+                         selectInput("heat_clustering",label="Clustering",c("none", "row", "column", "both"), selected="both"), #both
                          br(),
                          selectInput("heat_clusterdist",label="Cluster Distance",c("euclidean", "pearson", "spearman", "kendall", "maximum", "manhattan", "canberra", "binary", "minkowski"), selected="manhattan")
                   ),
@@ -171,13 +174,19 @@ ui <- dashboardPage(
                          br(),
                          textInput("heat_unitlabel",label="Unit label",value = "Enter unit...")
                   ),
-                  column(2,
+                  column(1,
                          checkboxInput("heat_reverse",label="Reverse Coloring:",value = FALSE),
                          br(),
-                         checkboxInput("heat_rowlabel",label="Row Label",value = TRUE)
+                         checkboxInput("heat_rowlabel",label="Row Label",value = T) #true
                   ),
-                  column(2,
-                         checkboxInput("heat_columnlabel",label="Column Label",value = TRUE)
+                  column(1,
+                         checkboxInput("heat_columnlabel",label="Column Label",value = T) #true
+                  ),
+                  fluidRow(
+                    column(12,
+                           actionButton(inputId = "heat_plot", label="Plot",
+                                        style = "color: #fff; background-color: #3c8dbc")
+                           )
                   )
               )
             ),
@@ -187,8 +196,8 @@ ui <- dashboardPage(
             
             
             fluidRow(
-              tabBox(width=12, title="Output", id="Output_heatmap",side="right",
-                     tabPanel("Plot", plotOutput("plot_heatmap",height="100%")),
+              tabBox(width = 12, title="Output", id="Output_heatmap",side="right",
+                     tabPanel("Plot", imageOutput("plot_heatmap", height = "100%")),
                      tabPanel("Table",dataTableOutput("table_heatmap"))
               )
             )
@@ -278,36 +287,68 @@ server <- function(input, output, session) {
   
   #heatmap-------------------------------------------------------------
   #Section heatmap
-  output$table_heatmap<-renderDataTable({
-    genes_t<-table1[table1[[2]] %in% input$heat_select,1]
-    values_t<-as.data.frame(table1[genes_t,])
-    values_t
-  },options=list(scrollX=TRUE))
+  source("helpers.R")  #removed in future
   
-  output$plot_heatmap<-renderPlot({
-    genes<-table1[table1[[2]] %in% input$heat_select,1]
-    values<-as.data.frame(table1[genes,])
-    values_Heat<-values[,3:ncol(table1)]
-    width=1
+  #get selected data
+  dataInput <- reactive({
+    #get selected rows (genes)
+    genes<-table1[table1[[2]] %in% input$heat_select_row,1]
+    #get selected columns
+    cols <- c(colnames(table1)[1:2], input$heat_select_col)
     
+    values<-as.data.frame(table1[genes,cols])
+  })
+  
+  
+  #change plot if button is pressed
+  heatmap_plot <- eventReactive(input$heat_plot,{
+    heat_values <- dataInput()[3:ncol(dataInput())]
+    #generate width/height
+    width_height <- heatmap_size(heat_values, input$heat_rowlabel, input$heat_columnlabel, input$heat_clustering)
     
+    outfile <- tempfile(fileext = '.png')
+    png(outfile, width = width_height[1], height = width_height[2], units = "in", res = 72 * session$clientData$pixelratio)
     #Function Call for Heatmap Plots
     #color_vector != null
-    create_complexheatmap(m=values_Heat,mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, reverse_coloring=input$heat_reverse, optimize=T)
+    plot <-create_complexheatmap(m=heat_values,mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, reverse_coloring=input$heat_reverse, optimize=T)
+    print(plot)
+    dev.off()
     
-    ##single file | not working
-    #create_complexheatmap(m, mode = input$heat_mode, unitlabel = input$heat_unitlabel, rowlabel = input$heat_rowlabel, collabel = input$heat_columnlabel, clustering = input$heat_clustering, clustdist = input$heat_clusterdist)
+    list(src = outfile)
+  })
+
+  #change table if button is pressed
+  heatmap_table <- eventReactive(input$heat_plot, {
+    dataInput()
+  })
   
-  }, height=900)
+  output$table_heatmap<-renderDataTable({
+    heatmap_table()
+  },options=list(scrollX=TRUE))
+  
+  output$plot_heatmap<-renderImage({
+    heatmap_plot()
+  })
   
   #switch colors one-/two-sided
   observe({
-    
-    #what to do with 0 in data?
     if (input$heat_distrib == "auto" & input$heat_mode != "raw" | input$heat_distrib == "two-sided") {
       updateSelectInput(session = session, inputId = "heat_color", choices = c("buwtrd", "rdblgr", "ylwtpu", "spectral"), selected = "spectral")
+      
+      #change label
+      if(input$heat_mode == "zscore"){
+        updateTextInput(session = session, inputId = "heat_unitlabel", value = "zscore")
+      }else if(input$heat_mode == "log2"){
+        updateTextInput(session = session, inputId = "heat_unitlabel", value = "log2")
+      }
+      
     }else{
       updateSelectInput(session = session, inputId = "heat_color", choices = c("reds","viridis","plasma","inferno","magma", "blues", "heat", "cubehelix", "ylgnbu"), selected = "reds")
+      
+      #change label
+      if(input$heat_mode == "raw"){
+        updateTextInput(session = session, inputId = "heat_unitlabel", value = "Enter unit...")
+      }
     }
   
   })
