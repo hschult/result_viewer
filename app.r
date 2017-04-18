@@ -181,6 +181,11 @@ ui <- dashboardPage(
                   ),
                   column(1,
                          checkboxInput("heat_columnlabel",label="Column Label",value = T) #true
+                  ),
+                  fluidRow(
+                    column(12,
+                           actionButton(inputId = "heat_plot", label="Plot", color = "blue")
+                           )
                   )
               )
             ),
@@ -282,40 +287,47 @@ server <- function(input, output, session) {
   #heatmap-------------------------------------------------------------
   #Section heatmap
   source("helpers.R")  #removed in future
-  output$table_heatmap<-renderDataTable({
-    genes_t<-table1[table1[[2]] %in% input$heat_select_row,1]
-    values_t<-as.data.frame(table1[genes_t,])
-  },options=list(scrollX=TRUE))
   
-  output$plot_heatmap<-renderImage({
+  #get selected data
+  dataInput <- reactive({
     #get selected rows (genes)
     genes<-table1[table1[[2]] %in% input$heat_select_row,1]
     #get selected columns
-    cols <- input$heat_select_col
-    
+    cols <- c(colnames(table1)[1:2], input$heat_select_col)
+    message(print(cols))
     values<-as.data.frame(table1[genes,cols])
-    #values <- values[cols]
-    values_Heat<-values
-
-    
-    #test_matrix <- matrix(data = 1:9, 3, 3)
-    #print(test_matrix)
-    
+  })
+  
+  
+  #change plot if button is pressed
+  heatmap_plot <- eventReactive(input$heat_plot,{
+    heat_values <- dataInput()[3:ncol(dataInput())]
     #generate width/height
-    width_height <- heatmap_size(values_Heat, input$heat_rowlabel, input$heat_columnlabel, input$heat_clustering)
+    width_height <- heatmap_size(heat_values, input$heat_rowlabel, input$heat_columnlabel, input$heat_clustering)
     
     outfile <- tempfile(fileext = '.png')
     png(outfile, width = width_height[1], height = width_height[2], units = "in", res = 72 * session$clientData$pixelratio)
     #Function Call for Heatmap Plots
     #color_vector != null
-    plot <-create_complexheatmap(m=values_Heat,mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, reverse_coloring=input$heat_reverse, optimize=T)
+    plot <-create_complexheatmap(m=heat_values,mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, reverse_coloring=input$heat_reverse, optimize=T)
     print(plot)
     dev.off()
     
     list(src = outfile)
-    ##single file | not working
-    #create_complexheatmap(m, mode = input$heat_mode, unitlabel = input$heat_unitlabel, rowlabel = input$heat_rowlabel, collabel = input$heat_columnlabel, clustering = input$heat_clustering, clustdist = input$heat_clusterdist)
-  })#, height = 500 )
+  })
+
+  #change table if button is pressed
+  heatmap_table <- eventReactive(input$heat_plot, {
+    dataInput()
+  })
+  
+  output$table_heatmap<-renderDataTable({
+    heatmap_table()
+  },options=list(scrollX=TRUE))
+  
+  output$plot_heatmap<-renderImage({
+    heatmap_plot()
+  })
   
   #switch colors one-/two-sided
   observe({
