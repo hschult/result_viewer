@@ -585,23 +585,26 @@ categories_nr=0
 create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = NULL, maxaxis = NULL, x_label = "", y_label = "", z_label = "", density = T, line = T){
   x_head <- ifelse(!nchar(x_label), colnames(data[3]), x_label)
   y_head <- ifelse(!nchar(y_label), colnames(data[4]), y_label)
-  z_head <- ifelse(!nchar(z_label), colnames(data[5]), z_label)
+  
+  if(ncol(data) >= 5){
+    z_head <- ifelse(!nchar(z_label), colnames(data[5]), z_label)
+  }
   
   #delete rows where both 0
   data <- data[!data[,3] == 0 && !data[,4] == 0]
   
   #round data to Integer
   if(round == TRUE){ 
-    data[,3:4] <- round(data[,3:4])
+    data[,3:ncol(data)] <- round(data[,3:ncol(data)])
   }
   #log10
   if(log10 == TRUE){
-    data[,3:4] <- log10(data[,3:4])
+    data[,3:ncol(data)] <- log10(data[,3:ncol(data)])
   }
   
   #autoscale axis
   if(is.null(maxaxis)){
-    maxcolcounts <- apply(data[,3:4], 2, max)
+    maxcolcounts <- apply(data[,3:ncol(data)], 2, max)
     maxaxis <- ceiling(max(maxcolcounts, na.rm = T))
   }
   
@@ -624,13 +627,17 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     #		legend.key = element_rect("green")						#not working!
   )
   
-  color_vector <- scatter_color(colors)
-  
-  plot <- ggplot(data = data, aes(x = data[[3]],y = data[[4]], color = data[[5]])) +
-    theme1 +
+  if(ncol(data) >= 5){
+    plot <- ggplot(data = data, aes(x = data[[3]],y = data[[4]], color = data[[5]])) +
+      ###color_gradient
+      scale_color_gradientn(colors = scatter_color(colors), name = z_head) 
     
-    ###color_gradient
-    scale_color_gradientn(colors = color_vector, name = z_head) +
+  }else{
+    plot <- ggplot(data = data, aes(x = data[[3]],y = data[[4]]))
+  }
+  
+  plot <- plot +
+    theme1 +
     
     ### binhex
     #		stat_binhex(bins=30) + 								

@@ -141,7 +141,7 @@ ui <- dashboardPage(
                   ),
                   column(3,
                          textInput(inputId = "scatter_z_label", label = "Color axis label:", placeholder = "Custom label"), 
-                         selectInput(inputId = "scatter_zaxis", label = "Color axis:", choices = names(table1[,3:ncol(table1)]), selected=names(table1)[5])
+                         selectInput(inputId = "scatter_zaxis", label = "Color axis:", choices = c("none", names(table1[,3:ncol(table1)])), selected=names(table1)[5])
                          
                   ),
                   column(3,
@@ -372,8 +372,12 @@ server <- function(input, output, session) {
   source("helpers.R")
   
   output$plot_scatter<-renderPlot({
-    selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_xaxis, input$scatter_yaxis, input$scatter_zaxis)]
-
+    if(input$scatter_zaxis == "none"){
+      selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_xaxis, input$scatter_yaxis)]
+    }else{
+      selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_xaxis, input$scatter_yaxis, input$scatter_zaxis)]
+    }
+    
     #write.csv(selectedData,file="test.txt")
     #message(print(selectedData))
     
