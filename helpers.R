@@ -582,7 +582,7 @@ categories_nr=0
 
 # Scatterplot -------------------------------------------------------------
 
-create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = NULL, maxaxis = NULL, x_label = "", y_label = "", z_label = ""){
+create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = NULL, maxaxis = NULL, x_label = "", y_label = "", z_label = "", density = T, line = T){
   x_head <- ifelse(!nchar(x_label), colnames(data[3]), x_label)
   y_head <- ifelse(!nchar(y_label), colnames(data[4]), y_label)
   z_head <- ifelse(!nchar(z_label), colnames(data[5]), z_label)
@@ -626,7 +626,7 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
   
   color_vector <- scatter_color(colors)
   
-  ggplot(data = data, aes(x = data[[3]],y = data[[4]], color = data[[5]])) +
+  plot <- ggplot(data = data, aes(x = data[[3]],y = data[[4]], color = data[[5]])) +
     theme1 +
     
     ###color_gradient
@@ -634,17 +634,7 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     
     ### binhex
     #		stat_binhex(bins=30) + 								
-  
-    ### kernel density
-    #stat_density2d(geom="tile", aes(fill=..density..), n=200, contour=FALSE) +		#n=resolution; density more sparse
-    stat_density2d(geom="tile", aes(fill=..density..^0.25), n=200, contour=FALSE) +	#n=resolution; density less sparse
-    scale_fill_gradient(low="white", high="black") +
     
-    
-    ### legend title 2 (move to the bottom to change order of legends)
-    #guides(fill=FALSE) +		#remove density legend
-    labs(fill="Density") +
-  
     ### point options
     geom_point(size=pointsize, alpha=transparency) + 
     
@@ -652,14 +642,8 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     #		geom_smooth(method="loess", se=FALSE, color="black") +				#se=display confidence interval (shaded area)
     #		geom_smooth(method="loess", se=FALSE) +				#se=display confidence interval (shaded area)
     
-    
-    ### diagonal line
-    geom_abline(intercept=0, slope=1) + 
-    
-    
     ### additional density plot at x and y axis
     #		geom_rug(col="darkred", alpha=.1) +						#density plot at x and y axis
-    
     
     ### axis range and labels
     xlim(0, maxaxis) +								#set x axis limits
@@ -668,6 +652,23 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     ylab(eval(y_head)) 
   
   #		guides(fill =guide_legend(keywidth=3, keyheight=1))				#legend for density
+  
+  if(line == TRUE){
+    ### diagonal line
+    plot$layers <- c(geom_abline(intercept=0, slope=1), plot$layers) #plot$layers, so line is in background
+  }  
+  
+  if(density == TRUE){
+    ### kernel density
+    #stat_density2d(geom="tile", aes(fill=..density..), n=200, contour=FALSE) +		#n=resolution; density more sparse
+    plot$layers <- c(stat_density2d(geom="tile", aes(fill=..density..^0.25), n=200, contour=FALSE), plot$layers)#n=resolution; density less sparse
+    
+    plot <- plot + scale_fill_gradient(low="white", high="black") +
+    #guides(fill=FALSE) +		#remove density legend
+    labs(fill="Density")
+  }
+  
+  return(plot)
 }
 
 # scatter_color --------------------------------------------------------------

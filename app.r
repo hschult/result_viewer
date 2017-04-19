@@ -147,7 +147,9 @@ ui <- dashboardPage(
                   column(3,
                          selectInput(inputId = "scatter_color", label = "Color Type:", choices = c("lightgoldenrod1", "azure2"), selected = "lightgoldenrod1"),
                          checkboxInput(inputId = "scatter_round", label = "Round to Integer",value = F),
-                         checkboxInput(inputId = "scatter_log10", label = "log10", value = F)
+                         checkboxInput(inputId = "scatter_log10", label = "log10", value = F),
+                         checkboxInput(inputId = "scatter_density", label = "density", value = T),
+                         checkboxInput(inputId = "scatter_line", label = "line", value = T)
                   )
               )
             ),
@@ -375,7 +377,7 @@ server <- function(input, output, session) {
     #write.csv(selectedData,file="test.txt")
     #message(print(selectedData))
     
-    create_scatterplot(selectedData, input$scatter_round, input$scatter_log10, colors = input$scatter_color, x_label = input$scatter_X_label, y_label = input$scatter_y_label, z_label = input$scatter_z_label)
+    create_scatterplot(selectedData, input$scatter_round, input$scatter_log10, colors = input$scatter_color, x_label = input$scatter_X_label, y_label = input$scatter_y_label, z_label = input$scatter_z_label, density = input$scatter_density, line = input$scatter_line)
     
     #ggplot(table1,aes(x=input$scatter_xaxis,y=input$scatter_yaxis))# + geom_point() 
     
