@@ -132,20 +132,20 @@ ui <- dashboardPage(
             fluidRow(
               box(width=12,title="Inputs",id="scatter_inputs",
                   column(3,
-                         textInput(inputId = "scatter_X_label", label = "X axis label:", placeholder = "Unit"),
-                         selectInput("scatter_xaxis",label="X axis:", choices = names(table1), selected=names(table1)[3])
+                         textInput(inputId = "scatter_X_label", label = "X axis label:", placeholder = "Custom label"),
+                         selectInput("scatter_xaxis",label="X axis:", choices = names(table1[,3:ncol(table1)]), selected=names(table1)[3])
                   ),
                   column(3,
-                         textInput(inputId = "scatter_y_label", label = "Y axis label:", placeholder = "Unit"),
-                         selectInput("scatter_yaxis",label="Y axis:",choices = names(table1), selected=names(table1)[4])
+                         textInput(inputId = "scatter_y_label", label = "Y axis label:", placeholder = "Custom label"),
+                         selectInput("scatter_yaxis",label="Y axis:",choices = names(table1[,3:ncol(table1)]), selected=names(table1)[4])
+                  ),
+                  column(3,
+                         textInput(inputId = "scatter_z_label", label = "Color axis label:", placeholder = "Custom label"), 
+                         selectInput(inputId = "scatter_zaxis", label = "Color axis:", choices = names(table1[,3:ncol(table1)]), selected=names(table1)[5])
+                         
                   ),
                   column(3,
                          selectInput(inputId = "scatter_color", label = "Color Type:", choices = c("lightgoldenrod1", "azure2"), selected = "lightgoldenrod1"),
-                         selectInput(inputId = "scatter_zaxis", label = "Color axis:", choices = names(table1), selected=names(table1)[5])
-                         
-                  ),
-                  column(3,
-                         
                          checkboxInput(inputId = "scatter_round", label = "Round to Integer",value = F),
                          checkboxInput(inputId = "scatter_log10", label = "log10", value = F)
                   )
@@ -375,7 +375,7 @@ server <- function(input, output, session) {
     #write.csv(selectedData,file="test.txt")
     #message(print(selectedData))
     
-    create_scatterplot(selectedData, input$scatter_round, input$scatter_log10, colors = input$scatter_color)
+    create_scatterplot(selectedData, input$scatter_round, input$scatter_log10, colors = input$scatter_color, x_label = input$scatter_X_label, y_label = input$scatter_y_label, z_label = input$scatter_z_label)
     
     #ggplot(table1,aes(x=input$scatter_xaxis,y=input$scatter_yaxis))# + geom_point() 
     
