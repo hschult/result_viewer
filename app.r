@@ -94,7 +94,9 @@ ui <- dashboardPage(
       div(img(src="icon.png", height = 70, width = 70),em("Bioinformatics Core Unit")),
       
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
-        menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), selected = TRUE),# selected needs to be removed
+        menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), selected = TRUE, # selected needs to be removed
+                 menuSubItem(text = "Scatter", tabName = "scatter"),
+                 menuSubItem(text = "Category", tabName = "scatter_cat")),
         menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
         menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
@@ -160,6 +162,8 @@ ui <- dashboardPage(
               )
             )
     ),
+    
+    
     #heatmap-----------------------------------------------------------------------
     #Main page for heatmap
     tabItem(tabName = "heatmap",
@@ -257,12 +261,48 @@ ui <- dashboardPage(
     tabItem(tabName = "enrichment",
             h2("Gene sets and enrichment"),
             img(src="icon.png")
-    )
+    ),
     #-----------------------------------------------------------------------
-    
+  
+    # Scatter_Category --------------------------------------------------------
+    #scatter sub_page
+    tabItem(tabName = "scatter_cat",
+        fluidRow(
+          box(width=12,title="Inputs",id="scatter_cat_inputs",
+              column(3,
+                     textInput(inputId = "scatter_cat_X_label", label = "X axis label:", placeholder = "Custom label"),
+                     selectInput("scatter_cat_xaxis",label="X axis:", choices = names(table1[,3:ncol(table1)]), selected=names(table1)[3])
+              ),
+              column(3,
+                     textInput(inputId = "scatter_cat_y_label", label = "Y axis label:", placeholder = "Custom label"),
+                     selectInput("scatter_cat_yaxis",label="Y axis:",choices = names(table1[,3:ncol(table1)]), selected=names(table1)[4])
+              ),
+              column(3,
+                     textInput(inputId = "scatter_cat_z_label", label = "Category label:", placeholder = "Custom label"), 
+                     selectInput(inputId = "scatter_cat_zaxis", label = "Categories:", choices = c("none", names(table1)), selected=names(table1)[2])
+                     
+              ),
+              column(3,
+                     selectInput(inputId = "scatter_cat_color", label = "Color Type:", choices = c("lightgoldenrod1", "azure2"), selected = "lightgoldenrod1"),
+                     checkboxInput(inputId = "scatter_cat_round", label = "Round to Integer",value = F),
+                     checkboxInput(inputId = "scatter_cat_log10", label = "log10", value = F),
+                     checkboxInput(inputId = "scatter_cat_density", label = "density", value = T),
+                     checkboxInput(inputId = "scatter_cat_line", label = "line", value = T)
+              )
+          )
+        ),
+        
+        fluidRow(
+          box(width=12, title="Output", id="Output_scatter_cat",
+              plotOutput("plot_scatter_cat",height="100%")
+          )
+        )
+        )
+      
   )
   )
 )
+
 
 
 
@@ -369,7 +409,6 @@ server <- function(input, output, session) {
     
   #scatter-------------------------------------------------------------
   #Section scatter
-  source("helpers.R")
   
   output$plot_scatter<-renderPlot({
     if(input$scatter_zaxis == "none"){
@@ -386,6 +425,24 @@ server <- function(input, output, session) {
     #ggplot(table1,aes(x=input$scatter_xaxis,y=input$scatter_yaxis))# + geom_point() 
     
   }, height=400)
+  
+  # Section Scatter Category ------------------------------------------------
+  source("helpers.R")
+  
+  output$plot_scatter_cat<-renderPlot({
+    if(input$scatter_cat_zaxis == "none"){
+      selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_cat_xaxis, input$scatter_cat_yaxis)]
+    }else{
+      selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_cat_xaxis, input$scatter_cat_yaxis, input$scatter_cat_zaxis)]
+    }
+    
+    create_scatter_cat_plot(selectedData, input$scatter_cat_round, input$scatter_cat_log10, colors = input$scatter_cat_color, x_label = input$scatter_cat_X_label, y_label = input$scatter_cat_y_label, z_label = input$scatter_cat_z_label, density = input$scatter_cat_density, line = input$scatter_cat_line)
+    
+  }, height=400)
+  
 }
+
+
+
 
 shinyApp(ui, server)

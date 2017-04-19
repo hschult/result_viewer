@@ -678,6 +678,106 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
   return(plot)
 }
 
+# Scatterplot categorized -------------------------------------------------------------
+
+create_scatter_cat_plot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = NULL, maxaxis = NULL, x_label = "", y_label = "", z_label = "", density = T, line = T){
+  x_head <- ifelse(!nchar(x_label), colnames(data[3]), x_label)
+  y_head <- ifelse(!nchar(y_label), colnames(data[4]), y_label)
+  
+  if(ncol(data) >= 5){
+    z_head <- ifelse(!nchar(z_label), "Categories", z_label)
+  }
+  
+  #delete rows where both 0
+  data <- data[!data[,3] == 0 && !data[,4] == 0]
+  
+  #round data to Integer
+  if(round == TRUE){ 
+    data[,3:ncol(data)] <- round(data[,3:ncol(data)])
+  }
+  #log10
+  if(log10 == TRUE){
+    data[,3:ncol(data)] <- log10(data[,3:ncol(data)])
+  }
+  
+  #autoscale axis
+  if(is.null(maxaxis)){
+    maxcolcounts <- apply(data[,3:ncol(data)], 2, max)
+    maxaxis <- ceiling(max(maxcolcounts, na.rm = T))
+  }
+  
+  #replace inf->NA->0
+  is.na(data) <- sapply(data, is.infinite)
+  data[is.na(data)] <- 0 
+  
+  theme1 <- theme (											#no gray background or helper lines
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line.x = element_line(size=.3),
+    axis.line.y = element_line(size=.3),
+    axis.title.x = element_text(face="bold", color="black", size=10),
+    axis.title.y = element_text(face="bold", color="black", size=10),
+    plot.title = element_text(face="bold", color="black", size=12)
+    #		legend.background = element_rect(color = "red")			#border color
+    #		legend.key = element_rect("green")						#not working!
+  )
+  
+  #colors
+  color_vector <- scatter_color(colors)
+  
+  plot <- ggplot(data, aes(x = data[,x_head], data[,y_head])) +
+    theme1 +
+    
+    ### binhex
+    #		stat_binhex(bins=30) + 								
+    
+    ### points colored by category
+    geom_point(size=pointsize, alpha=transparency, aes(color= factor(data[,eval(z_head)]))) + 
+    #scale_color_manual (
+      #labels = categories,
+      #values = colorRamp2(breaks, color_vector)(data[,z_head]), #get color for each value,
+      #breaks = ,
+      #drop=FALSE,								#to avoid dropping empty factors
+      #name = z_head
+      #			guide=guide_legend(title="sdsds" )					#legend for points
+    #) +
+    
+    ### smooth curve
+    #		geom_smooth(method="loess", se=FALSE, color="black") +				#se=display confidence interval (shaded area)
+    #		geom_smooth(method="loess", se=FALSE) +				#se=display confidence interval (shaded area)
+    
+    ### additional density plot at x and y axis
+    #		geom_rug(col="darkred", alpha=.1) +						#density plot at x and y axis
+    
+    ### axis range and labels
+    xlim(0, maxaxis) +								#set x axis limits
+    ylim(0, maxaxis) +								#set y axis limits
+    xlab(eval(x_head)) +								#axis labels
+    ylab(eval(y_head)) 
+  
+  #		guides(fill =guide_legend(keywidth=3, keyheight=1))				#legend for density
+  
+  if(line == TRUE){
+    ### diagonal line
+    plot$layers <- c(geom_abline(intercept=0, slope=1), plot$layers) #plot$layers, so line is in background
+  }  
+  
+  if(density == TRUE){
+    ### kernel density
+    #stat_density2d(geom="tile", aes(fill=..density..), n=200, contour=FALSE) +		#n=resolution; density more sparse
+    plot$layers <- c(stat_density2d(geom="tile", aes(fill=..density..^0.25), n=200, contour=FALSE), plot$layers)#n=resolution; density less sparse
+    
+    plot <- plot + scale_fill_gradient(low="white", high="black") +
+      #guides(fill=FALSE) +		#remove density legend
+      labs(fill="Density")
+  }
+  
+  return(plot)
+}
+
 # scatter_color --------------------------------------------------------------
 
 scatter_color <- function(palette){
