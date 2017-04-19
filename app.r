@@ -131,18 +131,24 @@ ui <- dashboardPage(
     tabItem(tabName = "scatter",
             fluidRow(
               box(width=12,title="Inputs",id="scatter_inputs",
-                  column(4,
-                         textInput(inputId = "scatter_X_label", label = "X axis label", placeholder = "Unit"),
+                  column(3,
+                         textInput(inputId = "scatter_X_label", label = "X axis label:", placeholder = "Unit"),
                          selectInput("scatter_xaxis",label="X axis:", choices = names(table1), selected=names(table1)[3])
                   ),
-                  column(4,
-                         textInput(inputId = "scatter_y_label", label = "Y axis label", placeholder = "Unit"),
+                  column(3,
+                         textInput(inputId = "scatter_y_label", label = "Y axis label:", placeholder = "Unit"),
                          selectInput("scatter_yaxis",label="Y axis:",choices = names(table1), selected=names(table1)[4])
                   ),
-                  column(4,
+                  column(3,
+                         selectInput(inputId = "scatter_color", label = "Color Type:", choices = c("lightgoldenrod1", "azure2"), selected = "lightgoldenrod1"),
+                         selectInput(inputId = "scatter_zaxis", label = "Color axis:", choices = names(table1), selected=names(table1)[5])
+                         
+                  ),
+                  column(3,
+                         
                          checkboxInput(inputId = "scatter_round", label = "Round to Integer",value = F),
                          checkboxInput(inputId = "scatter_log10", label = "log10", value = F)
-                         )
+                  )
               )
             ),
             
@@ -364,12 +370,12 @@ server <- function(input, output, session) {
   source("helpers.R")
   
   output$plot_scatter<-renderPlot({
-    selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_xaxis, input$scatter_yaxis)]
+    selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_xaxis, input$scatter_yaxis, input$scatter_zaxis)]
 
     #write.csv(selectedData,file="test.txt")
     #message(print(selectedData))
     
-    create_scatterplot(selectedData, input$scatter_round, input$scatter_log10)
+    create_scatterplot(selectedData, input$scatter_round, input$scatter_log10, colors = input$scatter_color)
     
     #ggplot(table1,aes(x=input$scatter_xaxis,y=input$scatter_yaxis))# + geom_point() 
     

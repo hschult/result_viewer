@@ -514,6 +514,10 @@ col13=colorRampPalette(brewer.pal(11, "RdGy"))(num_colors)							#two-sided (-x 
 col14=colorRampPalette(brewer.pal(11, "PuOr"))(num_colors)							#two-sided (-x .. +x): fold-change
 col15=colorRampPalette(c("royalblue3","steelblue3","white","indianred3","firebrick3"))(num_colors)		#two-sided (-x .. +x): fold-change
 
+################## scatter colors
+lightgoldenrod1 <- colorRampPalette(colors = c("lightgoldenrod1", "indianred2", "steelblue2"))(num_colors)
+azure2 <- colorRampPalette(colors = c("azure2", "red3", "blue3"))(num_colors)	
+
 #if ( opt$colorpalette=='auto' ) { 							#automatic mode
 #	color_vector_onesided=heat
 #	color_vector_twosided=buwtrd
@@ -578,11 +582,12 @@ categories_nr=0
 
 # Scatterplot -------------------------------------------------------------
 
-create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = F, maxaxis = NULL){
+create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = NULL, maxaxis = NULL){
   x_head <- colnames(data[3])
   y_head <- colnames(data[4])
   category_head <- colnames(data[2])
-  print(data)
+  #categories <- c("DP")
+  #print(data)
   
   #delete rows where both 0
   data <- data[!data[,3] == 0 && !data[,4] == 0]
@@ -621,30 +626,43 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     #		legend.key = element_rect("green")						#not working!
   )
   
-  ggplot(data = data, aes(x = data[[3]],y = data[[4]], color = symbol)) + geom_point() + theme1 +
+  color_vector <- scatter_color(colors)
+  
+  ggplot(data = data, aes(x = data[[3]],y = data[[4]], color = data[[5]])) +
+    theme1 +
+    
+    #color_gradient
+    scale_color_gradientn(colors = color_vector) +
+    
   ### binhex
   #		stat_binhex(bins=30) + 								
-  #		scale_fill_gradientn(colours=c("white","black")) + 
   
   ### kernel density
   #stat_density2d(geom="tile", aes(fill=..density..), n=200, contour=FALSE) +		#n=resolution; density more sparse
-  stat_density2d(geom="tile", aes(fill=..density..^0.25), n=200, contour=FALSE) +	#n=resolution; density less sparse
-    scale_fill_gradient(low="white", high="black") +
+  ##stat_density2d(geom="tile", aes(fill=..density..^0.25), n=200, contour=FALSE) +	#n=resolution; density less sparse
+    ##scale_fill_gradient(low="white", high="black") +
     
     
     ### legend title 2 (move to the bottom to change order of legends)
     #guides(fill=FALSE) +		#remove density legend
-    labs(fill="Density") +
-    
+    ##labs(fill="Density") +
+  
     ### points colored by category
-    geom_point(size=pointsize, alpha=transparency, aes(dt[,eval(x_head)], dt[,eval(y_head)], color=dt[,eval(category_head)])) + 
-    scale_color_manual (
-      #labels = categories,
-      values = colors,
-      drop=FALSE,								#to avoid dropping empty factors
-      name = "Category"
+    geom_point(data = data, aes(x = data[,3], y = data[,4]), size=pointsize, alpha=transparency)#+#data[,eval(category_head)])) + 
+    #scale_color_manual(
+    #  breaks = breaks,
+    #  values =  colorRamp2(breaks, color_vector)(data[,5]) #get color for each value
+      
+    #)
+    
+    
+    #scale_color_manual (
+      #labels = colnames(data[[5]]),
+      #values = scatter_color(colors, data[5]),
+      #drop=FALSE,								#to avoid dropping empty factors
+      #name = "Category"
       #			guide=guide_legend(title="sdsds" )					#legend for points
-    ) +
+    #) #+
     
     ### smooth curve
     #		geom_smooth(method="loess", se=FALSE, color="black") +				#se=display confidence interval (shaded area)
@@ -652,7 +670,7 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     
     
     ### diagonal line
-    geom_abline(intercept=0, slope=1)# + 
+    ##geom_abline(intercept=0, slope=1)# + 
     
     
     ### additional density plot at x and y axis
@@ -668,3 +686,13 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
   #		guides(fill =guide_legend(keywidth=3, keyheight=1))				#legend for density
 }
 
+# scatter_color --------------------------------------------------------------
+
+scatter_color <- function(palette){
+  #get color palette for scatter
+  
+  colors <- switch(palette,
+         "lightgoldenrod1" = lightgoldenrod1,
+         "azure2" = azure2
+         )
+}
