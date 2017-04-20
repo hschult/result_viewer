@@ -514,6 +514,10 @@ col13=colorRampPalette(brewer.pal(11, "RdGy"))(num_colors)							#two-sided (-x 
 col14=colorRampPalette(brewer.pal(11, "PuOr"))(num_colors)							#two-sided (-x .. +x): fold-change
 col15=colorRampPalette(c("royalblue3","steelblue3","white","indianred3","firebrick3"))(num_colors)		#two-sided (-x .. +x): fold-change
 
+################## scatter colors
+lightgoldenrod1 <- colorRampPalette(colors = c("lightgoldenrod1", "indianred2", "steelblue2"))(num_colors)
+azure2 <- colorRampPalette(colors = c("azure2", "red3", "blue3"))(num_colors)	
+
 #if ( opt$colorpalette=='auto' ) { 							#automatic mode
 #	color_vector_onesided=heat
 #	color_vector_twosided=buwtrd
@@ -575,3 +579,149 @@ col15=colorRampPalette(c("royalblue3","steelblue3","white","indianred3","firebri
 
 categories_nr=0
 
+
+# Scatterplot -------------------------------------------------------------
+
+#data:
+#   column 1: id
+#   column 2, 3(, 4): x, y(, z) 
+
+create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = NULL, maxaxis = NULL, x_label = "", y_label = "", z_label = "", density = T, line = T, categorized = F){
+  #get intern columnnames
+  x_head <- colnames(data[2])
+  y_head <- colnames(data[3])
+  if(ncol(data) >= 4){
+    z_head <- colnames(data[4])
+  }
+  
+  #set labelnames if needed
+  x_label <- ifelse(nchar(x_label), x_label, x_head)
+  y_label <- ifelse(nchar(y_label), y_label, y_head)
+  if(ncol(data) >= 4){
+    z_label <- ifelse(nchar(z_label), z_label, z_head)
+  }
+  
+  #delete rows where both 0
+  data <- data[!data[,2] == 0 && !data[,3] == 0]
+  
+  #round data to Integer
+  if(round == TRUE){ 
+    data[,2:ncol(data)] <- round(data[,2:ncol(data)])
+  }
+  #log10
+  if(log10 == TRUE){
+    if(categorized == TRUE){
+      data[,2:3] <- log10(data[,2:3])
+    }else{
+      data[,2:ncol(data)] <- log10(data[,2:ncol(data)])
+    }
+  }
+  
+  #autoscale axis
+  if(is.null(maxaxis)){
+    maxcolcounts <- apply(data[,2:3], 2, max)
+    maxaxis <- ceiling(max(maxcolcounts, na.rm = T))
+  }
+  
+  #replace inf->NA->0
+  is.na(data) <- sapply(data, is.infinite)
+  data[is.na(data)] <- 0
+
+  ########## assemble plot ##########
+  
+  theme1 <- theme (											#no gray background or helper lines
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line.x = element_line(size=.3),
+    axis.line.y = element_line(size=.3),
+    axis.title.x = element_text(face="bold", color="black", size=10),
+    axis.title.y = element_text(face="bold", color="black", size=10),
+    plot.title = element_text(face="bold", color="black", size=12)
+    #		legend.background = element_rect(color = "red")			#border color
+    #		legend.key = element_rect("green")						#not working!
+  )
+  
+  ###scatter with color axis
+  if(ncol(data) >= 4 && categorized == FALSE){
+    plot <- ggplot(data = data, aes(x = data[[2]],y = data[[3]], color = data[[4]])) +
+      ###color_gradient
+      scale_color_gradientn(colors = scatter_color(colors), name = z_label) + 
+      ### point options
+      geom_point(size=pointsize, alpha=transparency)
+  
+  ###scatter with categories    
+  }else if(ncol(data) >= 4 && categorized == TRUE){
+    ###categorized plot
+    color_vector <- scatter_color(colors)
+    breaks <- seq(from = 1,to = nrow(data), length.out = length(color_vector))
+    
+    plot <- ggplot(data = data, aes(x = data[[2]],y = data[[3]])) +
+      ### point options
+      geom_point(size=pointsize, alpha=transparency, aes(color = factor(data[,z_head]))) +
+    
+      scale_color_manual (
+        #labels = data[,z_head],
+        values = colorRampPalette(color_vector)(length(unique(data[,z_head]))), #get color for each value,
+        #breaks = ,
+        drop=FALSE,								#to avoid dropping empty factors
+        name = z_label
+        #			guide=guide_legend(title="sdsds" )					#legend for points
+      )
+      
+  }else{
+    plot <- ggplot(data = data, aes(x = data[[2]],y = data[[3]]))
+  }
+  
+  plot <- plot +
+    theme1 +
+    
+    ### binhex
+    #		stat_binhex(bins=30) + 								
+     
+    
+    ### smooth curve
+    #		geom_smooth(method="loess", se=FALSE, color="black") +				#se=display confidence interval (shaded area)
+    #		geom_smooth(method="loess", se=FALSE) +				#se=display confidence interval (shaded area)
+    
+    ### additional density plot at x and y axis
+    #		geom_rug(col="darkred", alpha=.1) +						#density plot at x and y axis
+    
+    ### axis range and labels
+    xlim(0, maxaxis) +								#set x axis limits
+    ylim(0, maxaxis) +								#set y axis limits
+    xlab(eval(x_label)) +								#axis labels
+    ylab(eval(y_label)) 
+  
+  #		guides(fill =guide_legend(keywidth=3, keyheight=1))				#legend for density
+  
+  if(line == TRUE){
+    ### diagonal line
+    plot$layers <- c(geom_abline(intercept=0, slope=1), plot$layers) #plot$layers, so line is in background
+  }  
+  
+  if(density == TRUE){
+    ### kernel density
+    #stat_density2d(geom="tile", aes(fill=..density..), n=200, contour=FALSE) +		#n=resolution; density more sparse
+    plot$layers <- c(stat_density2d(geom="tile", aes(fill=..density..^0.25), n=200, contour=FALSE), plot$layers)#n=resolution; density less sparse 
+    
+    plot <- plot + scale_fill_gradient(low="white", high="black") +
+    #guides(fill=FALSE) +		#remove density legend
+    labs(fill="Density")
+  }
+  
+  return(plot)
+}
+
+# scatter_color --------------------------------------------------------------
+
+scatter_color <- function(palette){
+  #get color palette for scatter
+  
+  colors <- switch(palette,
+         "lightgoldenrod1" = lightgoldenrod1,
+         "azure2" = azure2
+         )
+}
