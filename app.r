@@ -94,9 +94,9 @@ ui <- dashboardPage(
       div(img(src="icon.png", height = 70, width = 70),em("Bioinformatics Core Unit")),
       
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
-        menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), selected = TRUE, # selected needs to be removed
+        menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), 
                  menuSubItem(text = "Scatter", tabName = "scatter"),
-                 menuSubItem(text = "Category", tabName = "scatter_cat")),
+                 menuSubItem(text = "Category", tabName = "scatter_cat", selected = TRUE)), # selected needs to be removed
         menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
         menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
@@ -412,9 +412,9 @@ server <- function(input, output, session) {
   
   output$plot_scatter<-renderPlot({
     if(input$scatter_zaxis == "none"){
-      selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_xaxis, input$scatter_yaxis)]
+      selectedData <- table1[, c(colnames(table1)[1], input$scatter_xaxis, input$scatter_yaxis)]
     }else{
-      selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_xaxis, input$scatter_yaxis, input$scatter_zaxis)]
+      selectedData <- table1[, c(colnames(table1)[1], input$scatter_xaxis, input$scatter_yaxis, input$scatter_zaxis)]
     }
     
     #write.csv(selectedData,file="test.txt")
@@ -424,21 +424,21 @@ server <- function(input, output, session) {
     
     #ggplot(table1,aes(x=input$scatter_xaxis,y=input$scatter_yaxis))# + geom_point() 
     
-  }, height=400)
+  }, height=550)
   
   # Section Scatter Category ------------------------------------------------
   source("helpers.R")
   
   output$plot_scatter_cat<-renderPlot({
     if(input$scatter_cat_zaxis == "none"){
-      selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_cat_xaxis, input$scatter_cat_yaxis)]
+      selectedData <- table1[, c(colnames(table1)[1], input$scatter_cat_xaxis, input$scatter_cat_yaxis)]
     }else{
-      selectedData <- table1[, c(colnames(table1)[1], colnames(table1)[2], input$scatter_cat_xaxis, input$scatter_cat_yaxis, input$scatter_cat_zaxis)]
+      selectedData <- table1[, c(colnames(table1)[1], input$scatter_cat_xaxis, input$scatter_cat_yaxis, input$scatter_cat_zaxis)]
     }
     
-    create_scatter_cat_plot(selectedData, input$scatter_cat_round, input$scatter_cat_log10, colors = input$scatter_cat_color, x_label = input$scatter_cat_X_label, y_label = input$scatter_cat_y_label, z_label = input$scatter_cat_z_label, density = input$scatter_cat_density, line = input$scatter_cat_line)
+    create_scatterplot(selectedData, input$scatter_cat_round, input$scatter_cat_log10, colors = input$scatter_cat_color, x_label = input$scatter_cat_X_label, y_label = input$scatter_cat_y_label, z_label = input$scatter_cat_z_label, density = input$scatter_cat_density, line = input$scatter_cat_line, categorized = TRUE)
     
-  }, height=400)
+  }, height=550)
   
 }
 
