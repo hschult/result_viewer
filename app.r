@@ -13,7 +13,7 @@ library(viridis)	#for color palettes
 library(rje)		#for color palettes
 library(gridExtra)
 library(plotly)
-library(getopt) #for complexheatmap_single.r
+library(data.table)
 
 
 
@@ -27,16 +27,21 @@ source("helpers.R")
 #Data Input---------------------------------------------------------------------------
 #Load data
 
-
-table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header=TRUE, check.names=F)
+table1 <- fread("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header = TRUE)
+setkey(table1, id)
+#table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header=TRUE, check.names=F)
 #table1 <- read.delim("data/matrix_log2fc.txt", header = TRUE, check.names = FALSE)
 #table1=read.delim(file="data/normed_counts_orderd_development_ZB_Sven3.tsv",sep="\t",header=T,stringsAsFactors=T,row.names=1,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 #reps=read.delim(file="data/reps.txt",sep="\t",header=F,stringsAsFactors=T,row.names=NULL,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 
 #dynamic reps
-reps <- data.frame(V1 = sub("(.*)_\\d$", "\\1", colnames(table1)[3:ncol(table1)]), V2 = colnames(table1)[3:ncol(table1)])
+reps <- data.table(V1 = sub("(.*)_\\d$", "\\1", colnames(table1)[3:ncol(table1)]), V2 = colnames(table1)[3:ncol(table1)])
 
-row.names(table1) <- table1[,1]
+###selectInputData###
+genes <- sort(unique(table1[,2])[[1]])
+columns_num <- sort(unique(colnames(table1)[sapply(table1, is.numeric)]))
+columns <- sort(unique(colnames(table1)))
+
 
 message("Data loaded")
 
@@ -135,15 +140,15 @@ ui <- dashboardPage(
               box(width=12,title="Inputs",id="scatter_inputs",
                   column(3,
                          textInput(inputId = "scatter_X_label", label = "X axis label:", placeholder = "Custom label"),
-                         selectInput("scatter_xaxis",label="X axis:", choices = names(table1[,3:ncol(table1)]), selected=names(table1)[3])
+                         selectInput("scatter_xaxis",label="X axis:", choices = columns, selected=columns[3])
                   ),
                   column(3,
                          textInput(inputId = "scatter_y_label", label = "Y axis label:", placeholder = "Custom label"),
-                         selectInput("scatter_yaxis",label="Y axis:",choices = names(table1[,3:ncol(table1)]), selected=names(table1)[4])
+                         selectInput("scatter_yaxis",label="Y axis:",choices = columns, selected=columns[4])
                   ),
                   column(3,
                          textInput(inputId = "scatter_z_label", label = "Color axis label:", placeholder = "Custom label"), 
-                         selectInput(inputId = "scatter_zaxis", label = "Color axis:", choices = c("none", names(table1[,3:ncol(table1)])), selected=names(table1)[5])
+                         selectInput(inputId = "scatter_zaxis", label = "Color axis:", choices = columns, selected=columns[5])
                          
                   ),
                   column(3,
@@ -170,12 +175,12 @@ ui <- dashboardPage(
             fluidRow(
               box(width=12,title="Inputs",id="heatmap_inputs",
                   column(2,
-                         selectInput("heat_select_row",label="Genes:",multiple=TRUE, choices = as.list(sort(unique(table1[,2]))), selected=table1[1,2]),
+                         selectInput("heat_select_row",label="Genes:",multiple=TRUE, choices = genes, selected=genes[1]),
                     br(),
                          selectInput("heat_mode",label="Data transformation:",c("raw","log2","zscore"),selected="condition")
                   ),
                   column(2,
-                         selectInput("heat_select_col", label="Columns:", multiple = T, choices = as.list(sort(unique(colnames(table1)[sapply(table1, is.numeric)]))), selected = colnames(table1)[c(3,4)]) #only numeric selectable
+                         selectInput("heat_select_col", label="Columns:", multiple = T, choices = columns_num, selected = columns_num[c(1,2)]) #only numeric selectable
                   ),
                   column(2,
                          selectInput("heat_distrib",label="Data distribution",c("auto","one-sided","two-sided"), selected="auto"),
@@ -227,7 +232,7 @@ ui <- dashboardPage(
             fluidRow(
               box(width=12,title="Inputs",id="genview_inputs",
                   column(2,
-                  selectInput("gv_select",label="Genes:",multiple=TRUE, choices = as.list(sort(unique(table1[,2]))), selected= table1[1,2])
+                  selectInput("gv_select",label="Genes:",multiple=TRUE, choices = genes, selected= genes[1])
                   ),
                   column(2,
                   selectInput("gv_facet",label="Grouping:",c("condition","gene"),selected="condition")
@@ -271,15 +276,15 @@ ui <- dashboardPage(
           box(width=12,title="Inputs",id="scatter_cat_inputs",
               column(3,
                      textInput(inputId = "scatter_cat_X_label", label = "X axis label:", placeholder = "Custom label"),
-                     selectInput("scatter_cat_xaxis",label="X axis:", choices = names(table1[,3:ncol(table1)]), selected=names(table1)[3])
+                     selectInput("scatter_cat_xaxis",label="X axis:", choices = columns, selected=columns[3])
               ),
               column(3,
                      textInput(inputId = "scatter_cat_y_label", label = "Y axis label:", placeholder = "Custom label"),
-                     selectInput("scatter_cat_yaxis",label="Y axis:",choices = names(table1[,3:ncol(table1)]), selected=names(table1)[4])
+                     selectInput("scatter_cat_yaxis",label="Y axis:",choices = columns, selected=columns[4])
               ),
               column(3,
                      textInput(inputId = "scatter_cat_z_label", label = "Category label:", placeholder = "Custom label"), 
-                     selectInput(inputId = "scatter_cat_zaxis", label = "Categories:", choices = c("none", names(table1)), selected=names(table1)[2])
+                     selectInput(inputId = "scatter_cat_zaxis", label = "Categories:", choices = c("none", columns), selected=columns[2])
                      
               ),
               column(3,
@@ -314,6 +319,7 @@ server <- function(input, output, session) {
   
   output$table_genview<-renderDataTable({
     genes_t<-table1[table1[[2]] %in% input$gv_select,1]
+    print(genes_t)
     values_t<-as.data.frame(table1[genes_t,])
     values_t
   },options=list(scrollX=TRUE))
@@ -409,12 +415,13 @@ server <- function(input, output, session) {
     
   #scatter-------------------------------------------------------------
   #Section scatter
+  source("helpers.R")
   
   output$plot_scatter<-renderPlot({
     if(input$scatter_zaxis == "none"){
-      selectedData <- table1[, c(colnames(table1)[1], input$scatter_xaxis, input$scatter_yaxis)]
+      selectedData <- table1[, c(colnames(table1)[1], input$scatter_xaxis, input$scatter_yaxis), with = F]
     }else{
-      selectedData <- table1[, c(colnames(table1)[1], input$scatter_xaxis, input$scatter_yaxis, input$scatter_zaxis)]
+      selectedData <- table1[, c(colnames(table1)[1], input$scatter_xaxis, input$scatter_yaxis, input$scatter_zaxis), with = F]
     }
     
     #write.csv(selectedData,file="test.txt")
@@ -430,9 +437,9 @@ server <- function(input, output, session) {
   
   output$plot_scatter_cat<-renderPlot({
     if(input$scatter_cat_zaxis == "none"){
-      selectedData <- table1[, c(colnames(table1)[1], input$scatter_cat_xaxis, input$scatter_cat_yaxis)]
+      selectedData <- table1[, c(colnames(table1)[1], input$scatter_cat_xaxis, input$scatter_cat_yaxis), with = F]
     }else{
-      selectedData <- table1[, c(colnames(table1)[1], input$scatter_cat_xaxis, input$scatter_cat_yaxis, input$scatter_cat_zaxis)]
+      selectedData <- table1[, c(colnames(table1)[1], input$scatter_cat_xaxis, input$scatter_cat_yaxis, input$scatter_cat_zaxis), with = F]
     }
     
     create_scatterplot(selectedData, input$scatter_cat_round, input$scatter_cat_log10, colors = input$scatter_cat_color, x_label = input$scatter_cat_X_label, y_label = input$scatter_cat_y_label, z_label = input$scatter_cat_z_label, density = input$scatter_cat_density, line = input$scatter_cat_line, categorized = TRUE)

@@ -588,10 +588,11 @@ categories_nr=0
 
 create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = NULL, maxaxis = NULL, x_label = "", y_label = "", z_label = "", density = T, line = T, categorized = F){
   #get intern columnnames
-  x_head <- colnames(data[2])
-  y_head <- colnames(data[3])
+  x_head <- colnames(data[,2])
+  y_head <- colnames(data[,3])
+  print(data[,4])
   if(ncol(data) >= 4){
-    z_head <- colnames(data[4])
+    z_head <- colnames(data[,4, with = F])
   }
   
   #set labelnames if needed
