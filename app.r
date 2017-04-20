@@ -427,7 +427,6 @@ server <- function(input, output, session) {
   }, height=550)
   
   # Section Scatter Category ------------------------------------------------
-  source("helpers.R")
   
   output$plot_scatter_cat<-renderPlot({
     if(input$scatter_cat_zaxis == "none"){

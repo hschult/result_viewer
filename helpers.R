@@ -606,7 +606,11 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
   
   #round data to Integer
   if(round == TRUE){ 
-    data[,2:ncol(data)] <- round(data[,2:ncol(data)])
+    if(categorized == TRUE){
+      data[,2:3] <- round(data[,2:3])
+    }else{
+      data[,2:ncol(data)] <- round(data[,2:ncol(data)])
+    }
   }
   #log10
   if(log10 == TRUE){
