@@ -28,7 +28,7 @@ source("helpers.R")
 #Load data
 
 
-table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3.tsv", header=TRUE, check.names=F)
+table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header=TRUE, check.names=F)
 #table1 <- read.delim("data/matrix_log2fc.txt", header = TRUE, check.names = FALSE)
 #table1=read.delim(file="data/normed_counts_orderd_development_ZB_Sven3.tsv",sep="\t",header=T,stringsAsFactors=T,row.names=1,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 #reps=read.delim(file="data/reps.txt",sep="\t",header=F,stringsAsFactors=T,row.names=NULL,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
@@ -38,7 +38,7 @@ reps <- data.frame(V1 = sub("(.*)_\\d$", "\\1", colnames(table1)[3:ncol(table1)]
 
 row.names(table1) <- table1[,1]
 
-
+message("Data loaded")
 
 #---------------------------------------------------------------------------
 #---------------------------------------------------------------------------
@@ -175,7 +175,7 @@ ui <- dashboardPage(
                          selectInput("heat_mode",label="Data transformation:",c("raw","log2","zscore"),selected="condition")
                   ),
                   column(2,
-                         selectInput("heat_select_col", label="Columns:", multiple = T, choices = as.list(sort(unique(colnames(table1)[3:ncol(table1)]))), selected = colnames(table1)[c(3,4)])
+                         selectInput("heat_select_col", label="Columns:", multiple = T, choices = as.list(sort(unique(colnames(table1)[sapply(table1, is.numeric)]))), selected = colnames(table1)[c(3,4)]) #only numeric selectable
                   ),
                   column(2,
                          selectInput("heat_distrib",label="Data distribution",c("auto","one-sided","two-sided"), selected="auto"),
