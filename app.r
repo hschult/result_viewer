@@ -1,4 +1,5 @@
 #general part, run only at app start
+#general part, run only at app start
 
 
 library(shiny)
@@ -140,15 +141,15 @@ ui <- dashboardPage(
               box(width=12,title="Inputs",id="scatter_inputs",
                   column(3,
                          textInput(inputId = "scatter_X_label", label = "X axis label:", placeholder = "Custom label"),
-                         selectInput("scatter_xaxis",label="X axis:", choices = columns, selected=columns[3])
+                         selectInput("scatter_xaxis",label="X axis:", choices = columns_num, selected=columns_num[3])
                   ),
                   column(3,
                          textInput(inputId = "scatter_y_label", label = "Y axis label:", placeholder = "Custom label"),
-                         selectInput("scatter_yaxis",label="Y axis:",choices = columns, selected=columns[4])
+                         selectInput("scatter_yaxis",label="Y axis:",choices = columns_num, selected=columns_num[4])
                   ),
                   column(3,
                          textInput(inputId = "scatter_z_label", label = "Color axis label:", placeholder = "Custom label"), 
-                         selectInput(inputId = "scatter_zaxis", label = "Color axis:", choices = columns, selected=columns[5])
+                         selectInput(inputId = "scatter_zaxis", label = "Color axis:", choices = c("none", columns_num), selected=columns_num[5])
                          
                   ),
                   column(3,
@@ -168,6 +169,45 @@ ui <- dashboardPage(
             )
     ),
     
+    
+    #Scatter_Category --------------------------------------------------------
+    #scatter sub_page
+    tabItem(tabName = "scatter_cat",
+        fluidRow(
+          box(width=12,title="Inputs",id="scatter_cat_inputs",
+              column(3,
+                     textInput(inputId = "scatter_cat_X_label", label = "X axis label:", placeholder = "Custom label"),
+                     selectInput("scatter_cat_xaxis",label="X axis:", choices = columns_num, selected=columns_num[3])
+              ),
+              column(3,
+                     textInput(inputId = "scatter_cat_y_label", label = "Y axis label:", placeholder = "Custom label"),
+                     selectInput("scatter_cat_yaxis",label="Y axis:",choices = columns_num, selected=columns_num[4])
+              ),
+              column(3,
+                     textInput(inputId = "scatter_cat_z_label", label = "Category label:", placeholder = "Custom label"), 
+                     selectInput(inputId = "scatter_cat_zaxis", label = "Categories:", choices = c("none", columns), selected=columns[2])
+                     
+              ),
+              column(3,
+                     selectInput(inputId = "scatter_cat_color", label = "Color Type:", choices = c("lightgoldenrod1", "azure2"), selected = "lightgoldenrod1"),
+                     checkboxInput(inputId = "scatter_cat_round", label = "Round to Integer",value = F),
+                     checkboxInput(inputId = "scatter_cat_log10", label = "log10", value = F),
+                     checkboxInput(inputId = "scatter_cat_density", label = "density", value = T),
+                     checkboxInput(inputId = "scatter_cat_line", label = "line", value = T)
+              )
+          )
+        ),
+        
+        fluidRow(
+          box(width=12, title="Output", id="Output_scatter_cat",
+              plotOutput("plot_scatter_cat",height="100%")
+          )
+        )
+        ),
+
+
+
+
     
     #heatmap-----------------------------------------------------------------------
     #Main page for heatmap
@@ -266,50 +306,12 @@ ui <- dashboardPage(
     tabItem(tabName = "enrichment",
             h2("Gene sets and enrichment"),
             img(src="icon.png")
-    ),
-    #-----------------------------------------------------------------------
-  
-    # Scatter_Category --------------------------------------------------------
-    #scatter sub_page
-    tabItem(tabName = "scatter_cat",
-        fluidRow(
-          box(width=12,title="Inputs",id="scatter_cat_inputs",
-              column(3,
-                     textInput(inputId = "scatter_cat_X_label", label = "X axis label:", placeholder = "Custom label"),
-                     selectInput("scatter_cat_xaxis",label="X axis:", choices = columns, selected=columns[3])
-              ),
-              column(3,
-                     textInput(inputId = "scatter_cat_y_label", label = "Y axis label:", placeholder = "Custom label"),
-                     selectInput("scatter_cat_yaxis",label="Y axis:",choices = columns, selected=columns[4])
-              ),
-              column(3,
-                     textInput(inputId = "scatter_cat_z_label", label = "Category label:", placeholder = "Custom label"), 
-                     selectInput(inputId = "scatter_cat_zaxis", label = "Categories:", choices = c("none", columns), selected=columns[2])
-                     
-              ),
-              column(3,
-                     selectInput(inputId = "scatter_cat_color", label = "Color Type:", choices = c("lightgoldenrod1", "azure2"), selected = "lightgoldenrod1"),
-                     checkboxInput(inputId = "scatter_cat_round", label = "Round to Integer",value = F),
-                     checkboxInput(inputId = "scatter_cat_log10", label = "log10", value = F),
-                     checkboxInput(inputId = "scatter_cat_density", label = "density", value = T),
-                     checkboxInput(inputId = "scatter_cat_line", label = "line", value = T)
-              )
-          )
-        ),
-        
-        fluidRow(
-          box(width=12, title="Output", id="Output_scatter_cat",
-              plotOutput("plot_scatter_cat",height="100%")
-          )
-        )
-        )
-      
+    )      
   )
   )
 )
-
-
-
+    #-----------------------------------------------------------------------
+  
 
 # Server --------------------------------------------------------------------
 

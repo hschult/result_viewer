@@ -588,11 +588,10 @@ categories_nr=0
 
 create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = NULL, maxaxis = NULL, x_label = "", y_label = "", z_label = "", density = T, line = T, categorized = F){
   #get intern columnnames
-  x_head <- colnames(data[,2])
-  y_head <- colnames(data[,3])
-  print(data[,4])
+  x_head <- colnames(data)[2]
+  y_head <- colnames(data)[3]
   if(ncol(data) >= 4){
-    z_head <- colnames(data[,4, with = F])
+    z_head <- colnames(data)[4]
   }
   
   #set labelnames if needed
@@ -651,7 +650,7 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
   
   ###scatter with color axis
   if(ncol(data) >= 4 && categorized == FALSE){
-    plot <- ggplot(data = data, aes(x = data[[2]],y = data[[3]], color = data[[4]])) +
+    plot <- ggplot(data = data, aes(x = data[[x_head]],y = data[[y_head]], color = data[[z_head]])) +
       ###color_gradient
       scale_color_gradientn(colors = scatter_color(colors), name = z_label) + 
       ### point options
@@ -663,13 +662,13 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     color_vector <- scatter_color(colors)
     breaks <- seq(from = 1,to = nrow(data), length.out = length(color_vector))
     
-    plot <- ggplot(data = data, aes(x = data[[2]],y = data[[3]])) +
+    plot <- ggplot(data = data, aes(x = data[[x_head]],y = data[[y_head]])) +
       ### point options
-      geom_point(size=pointsize, alpha=transparency, aes(color = factor(data[,z_head]))) +
+      geom_point(size=pointsize, alpha=transparency, aes(color = factor(data[[z_head]]))) +
     
       scale_color_manual (
         #labels = data[,z_head],
-        values = colorRampPalette(color_vector)(length(unique(data[,z_head]))), #get color for each value,
+        values = colorRampPalette(color_vector)(length(unique(data[[z_head]]))), #get color for each value,
         #breaks = ,
         drop=FALSE,								#to avoid dropping empty factors
         name = z_label
@@ -677,7 +676,8 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
       )
       
   }else{
-    plot <- ggplot(data = data, aes(x = data[[2]],y = data[[3]]))
+    plot <- ggplot(data = data, aes(x = data[[x_head]],y = data[[y_head]])) +
+      geom_point(size=pointsize, alpha=transparency)
   }
   
   plot <- plot +
@@ -697,8 +697,8 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     ### axis range and labels
     xlim(0, maxaxis) +								#set x axis limits
     ylim(0, maxaxis) +								#set y axis limits
-    xlab(eval(x_label)) +								#axis labels
-    ylab(eval(y_label)) 
+    xlab(x_label) +								#axis labels
+    ylab(y_label) 
   
   #		guides(fill =guide_legend(keywidth=3, keyheight=1))				#legend for density
   
