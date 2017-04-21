@@ -28,7 +28,7 @@ source("helpers.R")
 #Data Input---------------------------------------------------------------------------
 #Load data
 
-table1 <- fread("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header = TRUE)
+table1 <- fread("data/normed_counts_orderd_development_ZB_Sven2.tsv", header = TRUE)
 setkey(table1, id)
 #table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header=TRUE, check.names=F)
 #table1 <- read.delim("data/matrix_log2fc.txt", header = TRUE, check.names = FALSE)
@@ -102,8 +102,8 @@ ui <- dashboardPage(
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), 
                  menuSubItem(text = "Scatter", tabName = "scatter"),
-                 menuSubItem(text = "Category", tabName = "scatter_cat", selected = TRUE)), # selected needs to be removed
-        menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
+                 menuSubItem(text = "Category", tabName = "scatter_cat")), # selected needs to be removed
+        menuItem("Heatmap", tabName = "heatmap", icon = icon("th"), selected = TRUE), 
         menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
@@ -156,7 +156,7 @@ ui <- dashboardPage(
                          selectInput(inputId = "scatter_color", label = "Color Type:", choices = c("lightgoldenrod1", "azure2"), selected = "lightgoldenrod1"),
                          checkboxInput(inputId = "scatter_round", label = "Round to Integer",value = F),
                          checkboxInput(inputId = "scatter_log10", label = "log10", value = F),
-                         checkboxInput(inputId = "scatter_density", label = "density", value = T),
+                         checkboxInput(inputId = "scatter_density", label = "density", value = F),
                          checkboxInput(inputId = "scatter_line", label = "line", value = T)
                   )
               )
@@ -192,7 +192,7 @@ ui <- dashboardPage(
                      selectInput(inputId = "scatter_cat_color", label = "Color Type:", choices = c("lightgoldenrod1", "azure2"), selected = "lightgoldenrod1"),
                      checkboxInput(inputId = "scatter_cat_round", label = "Round to Integer",value = F),
                      checkboxInput(inputId = "scatter_cat_log10", label = "log10", value = F),
-                     checkboxInput(inputId = "scatter_cat_density", label = "density", value = T),
+                     checkboxInput(inputId = "scatter_cat_density", label = "density", value = F),
                      checkboxInput(inputId = "scatter_cat_line", label = "line", value = T)
               )
           )
@@ -315,7 +315,7 @@ ui <- dashboardPage(
 
 # Server --------------------------------------------------------------------
 
-server <- function(input, output, session) {
+server <- function(input, output, session) {  source("helpers.R")
    #genview-------------------------------------------------------------
   #Section genview
   
@@ -353,17 +353,18 @@ server <- function(input, output, session) {
   #get selected data
   dataInput <- reactive({
     #get selected rows (genes)
-    genes<-table1[table1[[2]] %in% input$heat_select_row,1]
+    genes<-table1[table1[[2]] %in% input$heat_select_row]
     #get selected columns
     cols <- c(colnames(table1)[1:2], input$heat_select_col)
     
-    values<-as.data.frame(table1[genes,cols])
+    selectedData<- genes[, ..cols]
   })
   
   
   #change plot if button is pressed
   heatmap_plot <- eventReactive(input$heat_plot,{
-    heat_values <- dataInput()[3:ncol(dataInput())]
+    heat_values <- as.data.frame(dataInput()[, 3:ncol(dataInput())])
+    row.names(heat_values) <- dataInput()[[1]]
     #generate width/height
     width_height <- heatmap_size(heat_values, input$heat_rowlabel, input$heat_columnlabel, input$heat_clustering)
     
@@ -371,7 +372,7 @@ server <- function(input, output, session) {
     png(outfile, width = width_height[1], height = width_height[2], units = "in", res = 72 * session$clientData$pixelratio)
     #Function Call for Heatmap Plots
     #color_vector != null
-    plot <-create_complexheatmap(m=heat_values,mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, reverse_coloring=input$heat_reverse, optimize=T)
+    plot <-create_complexheatmap(m=heat_values, mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, reverse_coloring=input$heat_reverse, optimize=T)
     print(plot)
     dev.off()
     
@@ -417,7 +418,7 @@ server <- function(input, output, session) {
     
   #scatter-------------------------------------------------------------
   #Section scatter
-  source("helpers.R")
+
   
   output$plot_scatter<-renderPlot({
     if(input$scatter_zaxis == "none"){

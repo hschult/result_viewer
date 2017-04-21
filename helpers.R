@@ -38,13 +38,15 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
     m <- log2(m)
   }
   
-
+  #replace inf->NA->0
+  is.na(m) <- sapply(m, is.infinite)
+  m[is.na(m)] <- 0
   
   ### mapping of colors to min/max value depending on distribution type (one- or two-sided)
-  min=min(m)
-  absmin=abs(min(m))
-  max=max(m)
-  absmax=abs(max(m))
+  min=min(m, na.rm = TRUE)
+  absmin=abs(min(m, na.rm = TRUE))
+  max=max(m, na.rm = TRUE)
+  absmax=abs(max(m, na.rm = TRUE))
   totalmax=max(absmax, absmin)
   message(paste("value min: ", min, sep="\t"))
   message(paste("value max: ", max, sep="\t"))
