@@ -455,6 +455,18 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
 }
 
 
+
+# unique columns ----------------------------------------------------------
+
+uniqueColumns <- function(data){
+  allNames <- colnames(data)
+  uniqueNames <- make.names(allNames, unique = TRUE)
+  names(data) <- uniqueNames
+  
+  return(data)
+}
+
+
 #---------------------------------------------------------------------------
 #---------------------------------------------------------------------------
 #---------------------------------------------------------------------------
