@@ -28,20 +28,41 @@ source("helpers.R")
 #Data Input---------------------------------------------------------------------------
 #Load data
 
-table1 <- fread("data/normed_counts_orderd_development_ZB_Sven2.tsv", header = TRUE)
+table1 <- fread("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header = TRUE)
 setkey(table1, id)
+
+
+# reps --------------------------------------------------------------------
+
+
+#get categories
+#reps <- reps_maker()
+
+#columnnames unique?
+if(duplicated(colnames(table1))){
+  #make columnnames unique
+  allColumns <- colnames(table1) #with duplicates
+  table1 <- uniqueColumns(table1)
+}
+
+
+
 #table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header=TRUE, check.names=F)
 #table1 <- read.delim("data/matrix_log2fc.txt", header = TRUE, check.names = FALSE)
 #table1=read.delim(file="data/normed_counts_orderd_development_ZB_Sven3.tsv",sep="\t",header=T,stringsAsFactors=T,row.names=1,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 #reps=read.delim(file="data/reps.txt",sep="\t",header=F,stringsAsFactors=T,row.names=NULL,check.names=FALSE)		#with header, column 0 = rownames, do not convert strings to character vectors
 
 #dynamic reps
-reps <- data.table(V1 = sub("(.*)_\\d$", "\\1", colnames(table1)[3:ncol(table1)]), V2 = colnames(table1)[3:ncol(table1)])
+reps <- data.frame(V1 = sub("(.*)_\\d$", "\\1", colnames(table1)[sapply(table1, is.numeric)]), V2 = colnames(table1)[sapply(table1, is.numeric)])
+#print(reps)
 
-###selectInputData###
+# selectInputData ------------------------------------------------------------------------
 genes <- sort(unique(table1[,2])[[1]])
 columns_num <- sort(unique(colnames(table1)[sapply(table1, is.numeric)]))
 columns <- sort(unique(colnames(table1)))
+
+
+
 
 
 message("Data loaded")
@@ -103,8 +124,8 @@ ui <- dashboardPage(
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), 
                  menuSubItem(text = "Scatter", tabName = "scatter"),
                  menuSubItem(text = "Category", tabName = "scatter_cat")), # selected needs to be removed
-        menuItem("Heatmap", tabName = "heatmap", icon = icon("th"), selected = TRUE), 
-        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
+        menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
+        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart"), selected = TRUE),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
     )
@@ -320,10 +341,7 @@ server <- function(input, output, session) {  source("helpers.R")
   #Section genview
   
   output$table_genview<-renderDataTable({
-    genes_t<-table1[table1[[2]] %in% input$gv_select,1]
-    print(genes_t)
-    values_t<-as.data.frame(table1[genes_t,])
-    values_t
+    genes_t<-table1[table1[[2]] %in% input$gv_select]
   },options=list(scrollX=TRUE))
   
   #output$plot_genview<-renderPlot({
@@ -338,12 +356,16 @@ server <- function(input, output, session) {  source("helpers.R")
 
     
   output$plot_genview<-renderPlotly({
-    genes<-table1[table1[[2]] %in% input$gv_select,1]
-    values<-as.data.frame(table1[genes,])
-    values2<-values[,3:ncol(table1)]
-    width=1;
+    genes <- table1[table1[[2]] %in% input$gv_select]
+    #only select numeric columns
+    values <- as.data.frame(genes[, sapply(genes, is.numeric), with = FALSE])
+    row.names(values) <- genes[[1]]
+
+    #print(colnames(values))
+    #values2<-values[,3:ncol(table1)]
+    width=1
     #Function Call for Genview Plots
-    x<-dynamic_matrixsplit(values2,reps, input$gv_plottype, input$gv_facet,input$gv_color,input$gv_cols, width,input$gv_height)
+    x <- dynamic_matrixsplit(values,reps, input$gv_plottype, input$gv_facet,input$gv_color,input$gv_cols, width,input$gv_height)
     ggplotly(x,height=900)
   })#, height=900)
   
