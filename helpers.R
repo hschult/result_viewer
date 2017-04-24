@@ -353,14 +353,14 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
     #cat("facet_cols: ", facet_cols, "\n")
     #cat("facet_rows: ", facet_rows, "\n")
     
-    if (facet_target=="gene") {							#facet = gene
-      pdf_width = ((facet_cols*conditions*0.5)+1)*widthfactor
-      pdf_height = ((facet_rows*3)+0.1)*heightfactor
-    }
-    if (facet_target=="condition") {						#facet = condition
-      pdf_width = ((facet_cols*genes*0.4)+1)*widthfactor
-      pdf_height = ((facet_rows*3.5)+0.1)*heightfactor
-    }
+    #if (facet_target=="gene") {							#facet = gene
+    #  pdf_width = ((facet_cols*conditions*0.5)+1)*widthfactor
+    #  pdf_height = ((facet_rows*3)+0.1)*heightfactor
+    #}
+    #if (facet_target=="condition") {						#facet = condition
+    #  pdf_width = ((facet_cols*genes*0.4)+1)*widthfactor
+    #  pdf_height = ((facet_rows*3.5)+0.1)*heightfactor
+    #}
     
     ###################
     # Set common parameters for all plots
@@ -403,8 +403,8 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
       if (plot_type=="line") {													#line plot: no facetting, different size algorithm
         matrixplot = matrixplot + aes(x=variable, colour=condition, group=condition, fill=NULL)
         matrixplot = matrixplot + scale_x_discrete(expand=c(0.05,0.05))								#expand to reduce the whitespace inside the plot (left/right)
-        pdf_width = ((genes*1)+1) * widthfactor
-        pdf_height = ((conditions * 0.15) +2) * heightfactor
+        #pdf_width = ((genes*1)+1) * widthfactor
+        #pdf_height = ((conditions * 0.15) +2) * heightfactor
         #pdf_height = 3
         
       } else {
@@ -420,8 +420,8 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
       if (plot_type=="line") {													#line plot: no facetting, different size algorithm
         matrixplot = matrixplot + aes(x=condition, colour=variable, group=variable, fill=NULL)
         matrixplot = matrixplot + scale_x_discrete(expand=c(0.05,0.05))								#expand to reduce the whitespace inside the plot (left/right)
-        pdf_width = ((conditions*1)+1) * widthfactor
-        pdf_height = ((genes * 0.15) +2) * heightfactor
+        #pdf_width = ((conditions*1)+1) * widthfactor
+        #pdf_height = ((genes * 0.15) +2) * heightfactor
         #pdf_height = 3
       } else {
         ##scales="free_y"		#separate y scale for each facet (similar: free_x)
