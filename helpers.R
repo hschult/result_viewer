@@ -73,8 +73,14 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
   minlimit=min
   if (optimize==T && distribution=='two-sided'){				#try to create better color breaks (identical min/max for two-sided, reasonable rounding)
     maxlimit=max(absmax, absmin)
-    minlimit=-maxlimit
-  }		
+    minlimit= -maxlimit
+  }
+  
+  #catch error minlimit == maxlimit -> no break-vlaues
+  if(minlimit == maxlimit){
+    maxlimit <- maxlimit + 1
+  }
+  
   breaks=seq(minlimit,maxlimit,length=color_vector_n)#one break point for each color; even distribution between min/max
   message(paste("breaks min: ", minlimit, sep="\t"))
   message(paste("breaks max: ", maxlimit, sep="\t"))
