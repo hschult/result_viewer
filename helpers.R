@@ -38,13 +38,15 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
     m <- log2(m)
   }
   
-
+  #replace inf->NA->0
+  is.na(m) <- sapply(m, is.infinite)
+  m[is.na(m)] <- 0
   
   ### mapping of colors to min/max value depending on distribution type (one- or two-sided)
-  min=min(m)
-  absmin=abs(min(m))
-  max=max(m)
-  absmax=abs(max(m))
+  min=min(m, na.rm = TRUE)
+  absmin=abs(min(m, na.rm = TRUE))
+  max=max(m, na.rm = TRUE)
+  absmax=abs(max(m, na.rm = TRUE))
   totalmax=max(absmax, absmin)
   message(paste("value min: ", min, sep="\t"))
   message(paste("value max: ", max, sep="\t"))
@@ -71,8 +73,14 @@ create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, coll
   minlimit=min
   if (optimize==T && distribution=='two-sided'){				#try to create better color breaks (identical min/max for two-sided, reasonable rounding)
     maxlimit=max(absmax, absmin)
-    minlimit=-maxlimit
-  }		
+    minlimit= -maxlimit
+  }
+  
+  #catch error minlimit == maxlimit -> no break-vlaues
+  if(minlimit == maxlimit){
+    maxlimit <- maxlimit + 1
+  }
+  
   breaks=seq(minlimit,maxlimit,length=color_vector_n)#one break point for each color; even distribution between min/max
   message(paste("breaks min: ", minlimit, sep="\t"))
   message(paste("breaks max: ", maxlimit, sep="\t"))
@@ -453,6 +461,18 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
 }
 
 
+
+# unique columns ----------------------------------------------------------
+
+uniqueColumns <- function(data){
+  allNames <- colnames(data)
+  uniqueNames <- make.names(allNames, unique = TRUE)
+  names(data) <- uniqueNames
+  
+  return(data)
+}
+
+
 #---------------------------------------------------------------------------
 #---------------------------------------------------------------------------
 #---------------------------------------------------------------------------
@@ -588,10 +608,10 @@ categories_nr=0
 
 create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 2, colors = NULL, maxaxis = NULL, x_label = "", y_label = "", z_label = "", density = T, line = T, categorized = F){
   #get intern columnnames
-  x_head <- colnames(data[2])
-  y_head <- colnames(data[3])
+  x_head <- colnames(data)[2]
+  y_head <- colnames(data)[3]
   if(ncol(data) >= 4){
-    z_head <- colnames(data[4])
+    z_head <- colnames(data)[4]
   }
   
   #set labelnames if needed
@@ -650,7 +670,7 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
   
   ###scatter with color axis
   if(ncol(data) >= 4 && categorized == FALSE){
-    plot <- ggplot(data = data, aes(x = data[[2]],y = data[[3]], color = data[[4]])) +
+    plot <- ggplot(data = data, aes(x = data[[x_head]],y = data[[y_head]], color = data[[z_head]])) +
       ###color_gradient
       scale_color_gradientn(colors = scatter_color(colors), name = z_label) + 
       ### point options
@@ -662,13 +682,13 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     color_vector <- scatter_color(colors)
     breaks <- seq(from = 1,to = nrow(data), length.out = length(color_vector))
     
-    plot <- ggplot(data = data, aes(x = data[[2]],y = data[[3]])) +
+    plot <- ggplot(data = data, aes(x = data[[x_head]],y = data[[y_head]])) +
       ### point options
-      geom_point(size=pointsize, alpha=transparency, aes(color = factor(data[,z_head]))) +
+      geom_point(size=pointsize, alpha=transparency, aes(color = factor(data[[z_head]]))) +
     
       scale_color_manual (
         #labels = data[,z_head],
-        values = colorRampPalette(color_vector)(length(unique(data[,z_head]))), #get color for each value,
+        values = colorRampPalette(color_vector)(length(unique(data[[z_head]]))), #get color for each value,
         #breaks = ,
         drop=FALSE,								#to avoid dropping empty factors
         name = z_label
@@ -676,7 +696,8 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
       )
       
   }else{
-    plot <- ggplot(data = data, aes(x = data[[2]],y = data[[3]]))
+    plot <- ggplot(data = data, aes(x = data[[x_head]],y = data[[y_head]])) +
+      geom_point(size=pointsize, alpha=transparency)
   }
   
   plot <- plot +
@@ -696,8 +717,8 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     ### axis range and labels
     xlim(0, maxaxis) +								#set x axis limits
     ylim(0, maxaxis) +								#set y axis limits
-    xlab(eval(x_label)) +								#axis labels
-    ylab(eval(y_label)) 
+    xlab(x_label) +								#axis labels
+    ylab(y_label) 
   
   #		guides(fill =guide_legend(keywidth=3, keyheight=1))				#legend for density
   
