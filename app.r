@@ -28,10 +28,10 @@ source("helpers.R")
 #Data Input---------------------------------------------------------------------------
 #Load data
 
-table1 <- fread("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header = TRUE)
+table1 <- fread("data/normed_counts_orderd_development_ZB_Sven2.tsv", header = TRUE)
 setkey(table1, id)
 
-
+#print(head(table1))
 # reps --------------------------------------------------------------------
 
 
@@ -39,7 +39,7 @@ setkey(table1, id)
 #reps <- reps_maker()
 
 #columnnames unique?
-if(duplicated(colnames(table1))){
+if(length(duplicated(colnames(table1))) > 1){
   #make columnnames unique
   allColumns <- colnames(table1) #with duplicates
   table1 <- uniqueColumns(table1)
@@ -122,10 +122,10 @@ ui <- dashboardPage(
       
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), 
-                 menuSubItem(text = "Scatter", tabName = "scatter"),
+                 menuSubItem(text = "Scatter", tabName = "scatter", selected = TRUE),
                  menuSubItem(text = "Category", tabName = "scatter_cat")), # selected needs to be removed
         menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
-        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart"), selected = TRUE),
+        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
     )
@@ -177,9 +177,15 @@ ui <- dashboardPage(
                          selectInput(inputId = "scatter_color", label = "Color Type:", choices = c("lightgoldenrod1", "azure2"), selected = "lightgoldenrod1"),
                          checkboxInput(inputId = "scatter_round", label = "Round to Integer",value = F),
                          checkboxInput(inputId = "scatter_log10", label = "log10", value = F),
-                         checkboxInput(inputId = "scatter_density", label = "density", value = F),
+                         checkboxInput(inputId = "scatter_density", label = "density (bad performance)", value = F),
                          checkboxInput(inputId = "scatter_line", label = "line", value = T)
-                  )
+                  ),
+                  fluidRow(
+                    column(12,
+                       actionButton(inputId = "scatter_plot", label="Plot",
+                                    style = "color: #fff; background-color: #3c8dbc")
+                )
+              )
               )
             ),
             
@@ -213,9 +219,15 @@ ui <- dashboardPage(
                      selectInput(inputId = "scatter_cat_color", label = "Color Type:", choices = c("lightgoldenrod1", "azure2"), selected = "lightgoldenrod1"),
                      checkboxInput(inputId = "scatter_cat_round", label = "Round to Integer",value = F),
                      checkboxInput(inputId = "scatter_cat_log10", label = "log10", value = F),
-                     checkboxInput(inputId = "scatter_cat_density", label = "density", value = F),
+                     checkboxInput(inputId = "scatter_cat_density", label = "density (bad performance)", value = F),
                      checkboxInput(inputId = "scatter_cat_line", label = "line", value = T)
-              )
+              ),
+              fluidRow(
+                column(12,
+                   actionButton(inputId = "scatter_cat_plot", label="Plot",
+                                style = "color: #fff; background-color: #3c8dbc")
+            )
+          )
           )
         ),
         
@@ -309,8 +321,15 @@ ui <- dashboardPage(
                   ),
                   column(2,
                   sliderInput("gv_reserve",label="Reserve Input",min = 1, max = 7, value =2)
-                  )
+                  ),
+                  fluidRow(
+                    column(12,
+                       actionButton(inputId = "genview_plot", label="Plot",
+                                    style = "color: #fff; background-color: #3c8dbc")
+                )
               )
+              )
+              
             ),
             fluidRow(
             tabBox(width=12, title="Output", id="Output_genview",side="right",
@@ -336,12 +355,34 @@ ui <- dashboardPage(
 
 # Server --------------------------------------------------------------------
 
-server <- function(input, output, session) {  source("helpers.R")
+server <- function(input, output, session) {  source("helpers.R") #for dev purpose
    #genview-------------------------------------------------------------
   #Section genview
   
+  dataInput_genview <- reactive({
+    genes <- table1[table1[[2]] %in% input$gv_select]
+  })
+  
+  genview_table <- eventReactive(input$genview_plot, {
+    dataInput_genview()
+  })
+  
+  genview_plot <- eventReactive(input$genview_plot, {
+    genes <- dataInput_genview()
+    #only select numeric columns
+    values <- as.data.frame(genes[, sapply(genes, is.numeric), with = FALSE])
+    row.names(values) <- genes[[1]]
+
+    #print(colnames(values))
+    #values2<-values[,3:ncol(table1)]
+    width=1
+    #Function Call for Genview Plots
+    x <- dynamic_matrixsplit(values,reps, input$gv_plottype, input$gv_facet,input$gv_color,input$gv_cols, width,input$gv_height)
+    ggplotly(x,height=900)
+  })
+  
   output$table_genview<-renderDataTable({
-    genes_t<-table1[table1[[2]] %in% input$gv_select]
+    genview_table()
   },options=list(scrollX=TRUE))
   
   #output$plot_genview<-renderPlot({
@@ -356,24 +397,14 @@ server <- function(input, output, session) {  source("helpers.R")
 
     
   output$plot_genview<-renderPlotly({
-    genes <- table1[table1[[2]] %in% input$gv_select]
-    #only select numeric columns
-    values <- as.data.frame(genes[, sapply(genes, is.numeric), with = FALSE])
-    row.names(values) <- genes[[1]]
-
-    #print(colnames(values))
-    #values2<-values[,3:ncol(table1)]
-    width=1
-    #Function Call for Genview Plots
-    x <- dynamic_matrixsplit(values,reps, input$gv_plottype, input$gv_facet,input$gv_color,input$gv_cols, width,input$gv_height)
-    ggplotly(x,height=900)
+    genview_plot()
   })#, height=900)
   
   #heatmap-------------------------------------------------------------
   #Section heatmap
   
   #get selected data
-  dataInput <- reactive({
+  dataInput_heat <- reactive({
     #get selected rows (genes)
     genes<-table1[table1[[2]] %in% input$heat_select_row]
     #get selected columns
@@ -385,8 +416,8 @@ server <- function(input, output, session) {  source("helpers.R")
   
   #change plot if button is pressed
   heatmap_plot <- eventReactive(input$heat_plot,{
-    heat_values <- as.data.frame(dataInput()[, 3:ncol(dataInput())])
-    row.names(heat_values) <- dataInput()[[1]]
+    heat_values <- as.data.frame(dataInput_heat()[, 3:ncol(dataInput_heat())])
+    row.names(heat_values) <- dataInput_heat()[[1]]
     #generate width/height
     width_height <- heatmap_size(heat_values, input$heat_rowlabel, input$heat_columnlabel, input$heat_clustering)
     
@@ -403,7 +434,7 @@ server <- function(input, output, session) {  source("helpers.R")
 
   #change table if button is pressed
   heatmap_table <- eventReactive(input$heat_plot, {
-    dataInput()
+    dataInput_heat()
   })
   
   output$table_heatmap<-renderDataTable({
@@ -440,9 +471,7 @@ server <- function(input, output, session) {  source("helpers.R")
     
   #scatter-------------------------------------------------------------
   #Section scatter
-
-  
-  output$plot_scatter<-renderPlot({
+  scatter_plot <- eventReactive(input$scatter_plot, {
     if(input$scatter_zaxis == "none"){
       selectedData <- table1[, c(colnames(table1)[1], input$scatter_xaxis, input$scatter_yaxis), with = F]
     }else{
@@ -455,12 +484,14 @@ server <- function(input, output, session) {  source("helpers.R")
     create_scatterplot(selectedData, input$scatter_round, input$scatter_log10, colors = input$scatter_color, x_label = input$scatter_X_label, y_label = input$scatter_y_label, z_label = input$scatter_z_label, density = input$scatter_density, line = input$scatter_line)
     
     #ggplot(table1,aes(x=input$scatter_xaxis,y=input$scatter_yaxis))# + geom_point() 
-    
+  })
+  
+  output$plot_scatter<-renderPlot({
+    scatter_plot()
   }, height=550)
   
   # Section Scatter Category ------------------------------------------------
-  
-  output$plot_scatter_cat<-renderPlot({
+  scatter_cat_plot <- eventReactive(input$scatter_cat_plot, {
     if(input$scatter_cat_zaxis == "none"){
       selectedData <- table1[, c(colnames(table1)[1], input$scatter_cat_xaxis, input$scatter_cat_yaxis), with = F]
     }else{
@@ -469,6 +500,10 @@ server <- function(input, output, session) {  source("helpers.R")
     
     create_scatterplot(selectedData, input$scatter_cat_round, input$scatter_cat_log10, colors = input$scatter_cat_color, x_label = input$scatter_cat_X_label, y_label = input$scatter_cat_y_label, z_label = input$scatter_cat_z_label, density = input$scatter_cat_density, line = input$scatter_cat_line, categorized = TRUE)
     
+  })
+  
+  output$plot_scatter_cat<-renderPlot({
+    scatter_cat_plot()
   }, height=550)
   
 }
