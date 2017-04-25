@@ -28,7 +28,7 @@ source("helpers.R")
 #Data Input---------------------------------------------------------------------------
 #Load data
 
-table1 <- fread("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header = TRUE)
+table1 <- fread("data/normed_counts_orderd_development_ZB_Sven3.tsv", header = TRUE)
 setkey(table1, id)
 
 #print(head(table1))
