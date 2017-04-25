@@ -247,10 +247,22 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
   ###################
   # Combine and transform dataframes
   ###################
+  #detach ids from data
+  data_id <- data[[1]]
+  data <- data[, sapply(data, is.numeric), with = FALSE]
   
-  data = t(data)									#switch columns <> rows
+  data_cols <- colnames(data)
+  data = transpose(data) 								#switch columns <> rows
   data <- data +1									#add pseudocount
   data = log2(data)								#log transform
+  #data <- merge(data_id, data, by=0, sort=F, all= T)
+  
+  #place former colnames in first column
+  data$cols <- data_cols
+  setcolorder(data, c("cols", colnames(data)[1:ncol(data)-1]))
+  #reattach ids as colnames
+  colnames(data)[2:ncol(data)] <- data_id
+  print(data) #############################################################################################TODO
   
   reps=data.frame(reps[,-2], row.names=reps[,-1])					#set V2=sample as rowname
   colnames(reps)=c("condition")							#add header for condition
@@ -261,6 +273,7 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
   
   data=melt(data)
   
+  #print(data)
   ###################
   # Choose color palette
   ###################

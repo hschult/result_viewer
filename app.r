@@ -126,10 +126,10 @@ ui <- dashboardPage(
       
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), 
-                 menuSubItem(text = "Scatter", tabName = "scatter", selected = TRUE),
+                 menuSubItem(text = "Scatter", tabName = "scatter"),
                  menuSubItem(text = "Category", tabName = "scatter_cat")), # selected needs to be removed 
         menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
-        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
+        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart"), selected = TRUE),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
     )
@@ -309,7 +309,7 @@ ui <- dashboardPage(
             fluidRow(
               box(width=12,title="Inputs",id="genview_inputs",
                   column(2,
-                  selectInput("gv_select",label="Genes:",multiple=TRUE, choices = genes, selected= genes[1])
+                  selectInput("gv_select",label="Genes:",multiple=TRUE, choices = genes, selected= genes[2])
                   ),
                   column(2,
                   selectInput("gv_facet",label="Grouping:",c("condition","gene"),selected="condition")
@@ -374,14 +374,14 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
   genview_plot <- eventReactive(input$genview_plot, {
     genes <- dataInput_genview()
     #only select numeric columns
-    values <- as.data.frame(genes[, sapply(genes, is.numeric), with = FALSE])
-    row.names(values) <- genes[[1]]
+    #values <- as.data.frame(genes[, sapply(genes, is.numeric), with = FALSE])
+    #row.names(values) <- genes[[1]]
 
     #print(colnames(values))
     #values2<-values[,3:ncol(table1)]
     #width=1
     #Function Call for Genview Plots
-    x <- dynamic_matrixsplit(values,reps, input$gv_plottype, input$gv_facet,input$gv_color,input$gv_cols)#, width,input$gv_height)
+    x <- dynamic_matrixsplit(genes, reps, input$gv_plottype, input$gv_facet,input$gv_color,input$gv_cols)#, width,input$gv_height)
     ggplotly(x,height=900)
   })
   
