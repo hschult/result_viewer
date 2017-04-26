@@ -242,7 +242,6 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
   genes_order=unique(as.character(rownames(data)))								#get genes in correct order
   conditions=length(unique(reps$V1))											#number of conditions (columns in matrix)
   conditions_order=unique(as.character(reps$V1))									#get conditions in correct order
-  print(conditions)
   
   ###################
   # Combine and transform dataframes
