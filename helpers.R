@@ -285,7 +285,7 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
     num_colors=genes
   }
 
-
+  
   if (color_palette=="None") {
     color_fill_grayscale="grey75"										#color to use for filling geoms in grayscale mode
     colour_palette=rep(color_fill_grayscale,num_colors)
