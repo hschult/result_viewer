@@ -44,14 +44,14 @@ if(any(duplicated(colnames(table1)))){
   allColumns <- colnames(table1)[sapply(table1, is.numeric)] #with duplicates
   table1 <- uniqueColumns(table1)
   
-  reps <- data.frame(allColumns, colnames(table1)[sapply(table1, is.numeric)])
+  reps <- data.table(allColumns, colnames(table1)[sapply(table1, is.numeric)])
   #print(reps)
 }else{
   #dynamic reps
-  reps <- data.frame(V1 = sub("(.*)_\\d$", "\\1", colnames(table1)[sapply(table1, is.numeric)]), V2 = colnames(table1)[sapply(table1, is.numeric)])
+  reps <- data.table(V1 = sub("(.*)_\\d$", "\\1", colnames(table1)[sapply(table1, is.numeric)]), V2 = colnames(table1)[sapply(table1, is.numeric)])
 
 }
-
+setkey(reps, V2)
 
 
 #table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header=TRUE, check.names=F)

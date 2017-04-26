@@ -238,11 +238,11 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
   options(width=10000)								#do not wrap lines after 80 chars
   options(max.print=1000000)							#do not wrap lines after 80 chars
   
-  
   genes=nrow(data)												#number of genes (rows in matrix)
   genes_order=unique(as.character(rownames(data)))								#get genes in correct order
-  conditions=nlevels(reps$V1)											#number of conditions (columns in matrix)
+  conditions=length(unique(reps$V1))											#number of conditions (columns in matrix)
   conditions_order=unique(as.character(reps$V1))									#get conditions in correct order
+  print(conditions)
   
   ###################
   # Combine and transform dataframes
@@ -262,11 +262,11 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
   setcolorder(data, c("cols", colnames(data)[1:ncol(data)-1]))
   #reattach ids as colnames
   colnames(data)[2:ncol(data)] <- data_id
-  print(data) #############################################################################################TODO
+  setkey(data, cols)
+
   
-  reps=data.frame(reps[,-2], row.names=reps[,-1])					#set V2=sample as rowname
-  colnames(reps)=c("condition")							#add header for condition
-  data=merge(reps,data, by=0, sort=F, all=T)					#merge dataframes by rownames
+  colnames(reps)[1]=c("condition") #add header for condition
+  data <- data[reps]					#merge dataframes by rownames
   colnames(data)[1]="sample"							#change Row.names to sample
   data$sample=NULL								#completely remove sample column again
   data=transform(data,condition=factor(condition, levels=unique(condition)))	#order conditions in plot according to reps.txt (instead of alphabetic)
@@ -286,6 +286,7 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
     num_colors=genes
   }
   
+  print(num_colors) ###############################################################################################################################
   if (color_palette=="None") {
     color_fill_grayscale="grey75"										#color to use for filling geoms in grayscale mode
     colour_palette=rep(color_fill_grayscale,num_colors)
