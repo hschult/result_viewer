@@ -242,6 +242,7 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
   genes_order=unique(as.character(rownames(data)))								#get genes in correct order
   conditions=length(unique(reps$V1))											#number of conditions (columns in matrix)
   conditions_order=unique(as.character(reps$V1))									#get conditions in correct order
+  print(conditions)
   
   ###################
   # Combine and transform dataframes
@@ -284,7 +285,11 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
     num_colors=genes
   }
   
+<<<<<<< HEAD
 
+=======
+  print(num_colors) ###############################################################################################################################
+>>>>>>> e1868d4afd24383e2d5a825fe5d2aa0321d90a34
   if (color_palette=="None") {
     color_fill_grayscale="grey75"										#color to use for filling geoms in grayscale mode
     colour_palette=rep(color_fill_grayscale,num_colors)
