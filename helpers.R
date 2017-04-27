@@ -238,28 +238,39 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
   options(width=10000)								#do not wrap lines after 80 chars
   options(max.print=1000000)							#do not wrap lines after 80 chars
   
-  
   genes=nrow(data)												#number of genes (rows in matrix)
   genes_order=unique(as.character(rownames(data)))								#get genes in correct order
-  conditions=nlevels(reps$V1)											#number of conditions (columns in matrix)
+  conditions=length(unique(reps$V1))											#number of conditions (columns in matrix)
   conditions_order=unique(as.character(reps$V1))									#get conditions in correct order
   
   ###################
   # Combine and transform dataframes
   ###################
+  #detach ids from data
+  data_id <- data[[1]]
+  data <- data[, sapply(data, is.numeric), with = FALSE]
   
-  data = t(data)									#switch columns <> rows
+  data_cols <- colnames(data)
+  data = transpose(data) 								#switch columns <> rows
   data <- data +1									#add pseudocount
   data = log2(data)								#log transform
+  #data <- merge(data_id, data, by=0, sort=F, all= T)
   
-  reps=data.frame(reps[,-2], row.names=reps[,-1])					#set V2=sample as rowname
-  colnames(reps)=c("condition")							#add header for condition
-  data=merge(reps,data, by=0, sort=F, all=T)					#merge dataframes by rownames
+  #place former colnames in first column
+  data$cols <- data_cols
+  setcolorder(data, c("cols", colnames(data)[1:ncol(data)-1]))
+  #reattach ids as colnames
+  colnames(data)[2:ncol(data)] <- data_id
+  setkey(data, cols)
+
+  
+  colnames(reps)[1]=c("condition") #add header for condition
+  data <- data[reps]					#merge dataframes by rownames
   colnames(data)[1]="sample"							#change Row.names to sample
   data$sample=NULL								#completely remove sample column again
   data=transform(data,condition=factor(condition, levels=unique(condition)))	#order conditions in plot according to reps.txt (instead of alphabetic)
   
-  data=melt(data)
+  data=melt(data, id.vars = "condition")
   
   ###################
   # Choose color palette
@@ -272,6 +283,7 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
   if (facet_target=="condition") {										#facet = condition
     num_colors=genes
   }
+
   
   if (color_palette=="None") {
     color_fill_grayscale="grey75"										#color to use for filling geoms in grayscale mode
@@ -621,8 +633,10 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     z_label <- ifelse(nchar(z_label), z_label, z_head)
   }
   
-  #delete rows where both 0
-  data <- data[!data[,2] == 0 && !data[,3] == 0]
+
+  #delete rows where both 0 or at least one NA
+  rows <- which(as.logical((data[[2]]!=0) + (data[[3]] != 0)))
+  data <- data[rows]
   
   #round data to Integer
   if(round == TRUE){ 

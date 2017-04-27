@@ -28,7 +28,7 @@ source("helpers.R")
 #Data Input---------------------------------------------------------------------------
 #Load data
 
-table1 <- fread("data/normed_counts_orderd_development_ZB_Sven3.tsv", header = TRUE)
+table1 <- fread("data/normed_counts_orderd_development_ZB_Sven3_categorized.tsv", header = TRUE)
 setkey(table1, id)
 
 #print(head(table1))
@@ -44,14 +44,14 @@ if(any(duplicated(colnames(table1)))){
   allColumns <- colnames(table1)[sapply(table1, is.numeric)] #with duplicates
   table1 <- uniqueColumns(table1)
   
-  reps <- data.frame(allColumns, colnames(table1)[sapply(table1, is.numeric)])
+  reps <- data.table(allColumns, colnames(table1)[sapply(table1, is.numeric)])
   #print(reps)
 }else{
   #dynamic reps
-  reps <- data.frame(V1 = sub("(.*)_\\d$", "\\1", colnames(table1)[sapply(table1, is.numeric)]), V2 = colnames(table1)[sapply(table1, is.numeric)])
+  reps <- data.table(V1 = sub("(.*)_\\d$", "\\1", colnames(table1)[sapply(table1, is.numeric)]), V2 = colnames(table1)[sapply(table1, is.numeric)])
 
 }
-
+setkey(reps, V2)
 
 
 #table1 <- read.delim("data/normed_counts_orderd_development_ZB_Sven3_big.tsv", header=TRUE, check.names=F)
@@ -309,7 +309,7 @@ ui <- dashboardPage(
             fluidRow(
               box(width=12,title="Inputs",id="genview_inputs",
                   column(2,
-                  selectInput("gv_select",label="Genes:",multiple=TRUE, choices = genes, selected= genes[1])
+                  selectInput("gv_select",label="Genes:",multiple=TRUE, choices = genes, selected= genes[2])
                   ),
                   column(2,
                   selectInput("gv_facet",label="Grouping:",c("condition","gene"),selected="condition")
@@ -374,14 +374,14 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
   genview_plot <- eventReactive(input$genview_plot, {
     genes <- dataInput_genview()
     #only select numeric columns
-    values <- as.data.frame(genes[, sapply(genes, is.numeric), with = FALSE])
-    row.names(values) <- genes[[1]]
+    #values <- as.data.frame(genes[, sapply(genes, is.numeric), with = FALSE])
+    #row.names(values) <- genes[[1]]
 
     #print(colnames(values))
     #values2<-values[,3:ncol(table1)]
     #width=1
     #Function Call for Genview Plots
-    x <- dynamic_matrixsplit(values,reps, input$gv_plottype, input$gv_facet,input$gv_color,input$gv_cols)#, width,input$gv_height)
+    x <- dynamic_matrixsplit(genes, reps, input$gv_plottype, input$gv_facet,input$gv_color,input$gv_cols)#, width,input$gv_height)
     ggplotly(x,height=900)
   })
   
