@@ -126,10 +126,10 @@ ui <- dashboardPage(
       
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), 
-                 menuSubItem(text = "Scatter", tabName = "scatter", selected = TRUE),
+                 menuSubItem(text = "Scatter", tabName = "scatter"),
                  menuSubItem(text = "Category", tabName = "scatter_cat")), # selected needs to be removed 
         menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
-        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
+        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart"), selected = TRUE),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
     )
@@ -382,7 +382,7 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
     #width=1
     #Function Call for Genview Plots
     x <- dynamic_matrixsplit(genes, reps, input$gv_plottype, input$gv_facet,input$gv_color,input$gv_cols)#, width,input$gv_height)
-    ggplotly(x,height=900)
+    ggplotly(x,height=900, tooltip = "text")
   })
   
   output$table_genview<-renderDataTable({

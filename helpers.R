@@ -466,6 +466,11 @@ dynamic_matrixsplit <- function(data, reps, plot_type,facet_target,color_palette
       #matrixplot = matrixplot + geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=0.05)								#error bar = standard deviation
       matrixplot = matrixplot + geom_errorbar(aes(ymin=value-se, ymax=value+se), width=0.05)								#error bar = standard error
       matrixplot = matrixplot + geom_line() + geom_point()											#bar plot of the mean (color=condition)
+      #set hovertext
+      matrixplot = matrixplot + aes(text = paste("ID: ", data$variable, "\n",
+                                                 "Condition: ", data$condition, "\n",
+                                                 "Value: ", data$value
+                                                 ))
     }
   }
   
