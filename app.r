@@ -28,7 +28,7 @@ source("helpers.R")
 #Data Input---------------------------------------------------------------------------
 #Load data
 
-table1 <- fread("data/normed_counts_orderd_development_ZB_Sven3.tsv", header = TRUE)
+table1 <- fread("data/normed_counts_orderd_development_ZB_Sven3_categorized.tsv", header = TRUE)
 setkey(table1, id)
 
 #print(head(table1))
@@ -126,10 +126,10 @@ ui <- dashboardPage(
       
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), 
-                 menuSubItem(text = "Scatter", tabName = "scatter"),
+                 menuSubItem(text = "Scatter", tabName = "scatter", selected = TRUE),
                  menuSubItem(text = "Category", tabName = "scatter_cat")), # selected needs to be removed 
         menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
-        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart"), selected = TRUE),
+        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
     )

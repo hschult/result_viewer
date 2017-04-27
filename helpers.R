@@ -633,8 +633,10 @@ create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, poi
     z_label <- ifelse(nchar(z_label), z_label, z_head)
   }
   
-  #delete rows where both 0
-  data <- data[!data[,2] == 0 && !data[,3] == 0]
+
+  #delete rows where both 0 or at least one NA
+  rows <- which(as.logical((data[[2]]!=0) + (data[[3]] != 0)))
+  data <- data[rows]
   
   #round data to Integer
   if(round == TRUE){ 
