@@ -126,10 +126,10 @@ ui <- dashboardPage(
       
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), 
-                 menuSubItem(text = "Scatter", tabName = "scatter"),
+                 menuSubItem(text = "Scatter", tabName = "scatter", selected = TRUE),
                  menuSubItem(text = "Category", tabName = "scatter_cat")), # selected needs to be removed 
         menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
-        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart"), selected = TRUE),
+        menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
     )
@@ -195,7 +195,7 @@ ui <- dashboardPage(
             
             fluidRow(
               box(width=12, title="Output", id="Output_scatter",
-                plotOutput("plot_scatter",height="100%")
+                plotlyOutput("plot_scatter",height="100%")
               )
             )
     ),
@@ -237,7 +237,7 @@ ui <- dashboardPage(
         
         fluidRow(
           box(width=12, title="Output", id="Output_scatter_cat",
-              plotOutput("plot_scatter_cat",height="100%")
+              plotlyOutput("plot_scatter_cat",height="100%")
           )
         )
         ),
@@ -479,20 +479,33 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
     if(input$scatter_zaxis == "none"){
       selectedData <- table1[, c(colnames(table1)[1], input$scatter_xaxis, input$scatter_yaxis), with = F]
     }else{
-      selectedData <- table1[, c(colnames(table1)[1], input$scatter_xaxis, input$scatter_yaxis, input$scatter_zaxis), with = F]
+      x <- c(colnames(table1)[1], input$scatter_xaxis, input$scatter_yaxis, input$scatter_zaxis)
+      selectedData <- table1[, x, with = F]
     }
     
+    #selectedData <- table1[, c(1,3,4,5)]
     #write.csv(selectedData,file="test.txt")
     #message(print(selectedData))
+    ##print(str(selectedData))
     
-    create_scatterplot(selectedData, input$scatter_round, input$scatter_log10, colors = input$scatter_color, x_label = input$scatter_X_label, y_label = input$scatter_y_label, z_label = input$scatter_z_label, density = input$scatter_density, line = input$scatter_line)
+    ##rows <- which(as.logical((selectedData[[2]]!=0) + (selectedData[[3]] != 0)))
+    ##selectedData <- selectedData[rows]
     
+    ##selectedData[,2:4] <- log10(selectedData[,2:4])
+    ##is.na(selectedData) <- sapply(selectedData, is.infinite)
+    ##selectedData[is.na(selectedData)] <- 0
+    
+    x <- create_scatterplot2(selectedData, input$scatter_round, input$scatter_log10, colors = input$scatter_color, x_label = input$scatter_X_label, y_label = input$scatter_y_label, z_label = input$scatter_z_label, density = input$scatter_density, line = input$scatter_line)
+    ##x <- ggplot(selectedData, aes(selectedData[[2]], selectedData[[3]], color = selectedData[[4]])) + 
+    ##  geom_point(alpha = 0.5) +
+    ##  stat_density2d()
+    ggplotly(x, tooltip = "all")
     #ggplot(table1,aes(x=input$scatter_xaxis,y=input$scatter_yaxis))# + geom_point() 
   })
   
-  output$plot_scatter<-renderPlot({
+  output$plot_scatter<-renderPlotly({
     scatter_plot()
-  }, height=550)
+  })#, height=550)
   
   # Section Scatter Category ------------------------------------------------
   scatter_cat_plot <- eventReactive(input$scatter_cat_plot, {
@@ -502,13 +515,13 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
       selectedData <- table1[, c(colnames(table1)[1], input$scatter_cat_xaxis, input$scatter_cat_yaxis, input$scatter_cat_zaxis), with = F]
     }
     
-    create_scatterplot(selectedData, input$scatter_cat_round, input$scatter_cat_log10, colors = input$scatter_cat_color, x_label = input$scatter_cat_X_label, y_label = input$scatter_cat_y_label, z_label = input$scatter_cat_z_label, density = input$scatter_cat_density, line = input$scatter_cat_line, categorized = TRUE)
-    
+    x <- create_scatterplot(selectedData, input$scatter_cat_round, input$scatter_cat_log10, colors = input$scatter_cat_color, x_label = input$scatter_cat_X_label, y_label = input$scatter_cat_y_label, z_label = input$scatter_cat_z_label, density = input$scatter_cat_density, line = input$scatter_cat_line, categorized = TRUE)
+    ggplotly(x)
   })
   
-  output$plot_scatter_cat<-renderPlot({
+  output$plot_scatter_cat<-renderPlotly({
     scatter_cat_plot()
-  }, height=550)
+  })#, height=550)
   
 }
 
