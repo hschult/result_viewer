@@ -621,161 +621,6 @@ categories_nr=0
 
 #data:
 #   column 1: id
-#   column 2, 3(, 4): x, y(, z) 
-
-create_scatterplot <- function(data, round = F, log10 = F, transparency = 1, pointsize = 1, colors = NULL, maxaxis = NULL, x_label = "", y_label = "", z_label = "", density = T, line = T, categorized = F){
-  ########## prepare data ##########
-  #get intern columnnames
-  x_head <- colnames(data)[2]
-  y_head <- colnames(data)[3]
-  if(ncol(data) >= 4){ z_head <- colnames(data)[4]}
-  
-  #set labelnames if needed
-  x_label <- ifelse(nchar(x_label), x_label, x_head)
-  y_label <- ifelse(nchar(y_label), y_label, y_head)
-  if(ncol(data) >= 4){ z_label <- ifelse(nchar(z_label), z_label, z_head)}
-  
-
-  #delete rows where both 0 or at least one NA
-  rows <- which(as.logical((data[[2]]!=0) + (data[[3]] != 0)))
-  data <- data[rows]
-  
-  #round data to Integer
-  if(round == TRUE){ 
-    if(categorized == TRUE){
-      data[,2:3] <- round(data[,2:3])
-    }else{
-      data[,2:ncol(data)] <- round(data[,2:ncol(data)])
-    }
-  }
-  #log10
-  if(log10 == TRUE){
-    if(categorized == TRUE){
-      data[,2:3] <- log10(data[,2:3])
-    }else{
-      data[,2:ncol(data)] <- log10(data[,2:ncol(data)])
-    }
-  }
-  
-  #autoscale axis
-  if(is.null(maxaxis)){
-    maxcolcounts <- apply(data[,2:3], 2, max)
-    maxaxis <- ceiling(max(maxcolcounts, na.rm = T))
-  }
-  
-  #replace inf->NA->0
-  is.na(data) <- sapply(data, is.infinite)
-  data[is.na(data)] <- 0
-
-  ########## assemble plot ##########
-  
-  theme1 <- theme (											#no gray background or helper lines
-    plot.background = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    panel.background = element_blank(),
-    axis.line.x = element_line(size=.3),
-    axis.line.y = element_line(size=.3),
-    axis.title.x = element_text(face="bold", color="black", size=10),
-    axis.title.y = element_text(face="bold", color="black", size=10),
-    plot.title = element_text(face="bold", color="black", size=12)
-    #		legend.background = element_rect(color = "red")			#border color
-    #		legend.key = element_rect("green")						#not working!
-  )
-  
-  ###z-axis exists?
-  if(ncol(data) >= 4){
-    plot <- ggplot(data = data, aes(x = get(x_head),y = get(y_head), color = get(z_head)))
-    
-      ###scatter with color axis
-    if(categorized == FALSE){
-      plot <- plot +
-        ###color_gradient
-        scale_color_gradientn(colors = scatter_color(colors), name = z_label) + 
-        ### point options
-        geom_point(size=pointsize, alpha=transparency)
-    
-    ###scatter with categories    
-    }else if(categorized == TRUE){
-      ###categorized plot
-      color_vector <- scatter_color(colors)
-      breaks <- seq(from = 1,to = nrow(data), length.out = length(color_vector))
-      
-      plot <- plot +
-        ### point options
-        geom_point(size=pointsize, alpha=transparency, aes(color = factor(get(z_head)))) +
-      
-        scale_color_manual (
-          #labels = data[,z_head],
-          values = colorRampPalette(color_vector)(length(unique(data[[z_head]]))), #get color for each value,
-          #breaks = ,
-          drop=FALSE,								#to avoid dropping empty factors
-          name = z_label
-          #			guide=guide_legend(title="sdsds" )					#legend for points
-        )
-    }   
-  }else{
-    plot <- ggplot(data = data, aes(x = get(x_head),y = get(y_head))) +
-      geom_point(size=pointsize, alpha=transparency)
-  }
-  
-   
-  plot <- plot +
-    theme1 +
-    
-    ### binhex
-    #		stat_binhex(bins=30) + 								
-     
-    
-    ### smooth curve
-    #		geom_smooth(method="loess", se=FALSE, color="black") +				#se=display confidence interval (shaded area)
-    #		geom_smooth(method="loess", se=FALSE) +				#se=display confidence interval (shaded area)
-    
-    ### additional density plot at x and y axis
-    #		geom_rug(col="darkred", alpha=.1) +						#density plot at x and y axis
-    
-    ### axis range and labels
-    xlim(0, maxaxis) +								#set x axis limits
-    ylim(0, maxaxis) +								#set y axis limits
-    xlab(x_label) +								#axis labels
-    ylab(y_label) 
-  
-  #		guides(fill =guide_legend(keywidth=3, keyheight=1))				#legend for density
-  
-  if(line == TRUE){
-    ### diagonal line
-    plot$layers <- c(geom_abline(intercept=0, slope=1), plot$layers) #plot$layers, so line is in background
-  }  
-  
-  if(density == TRUE){
-    ### kernel density
-    #plot <- plot + stat_density2d(geom="tile", aes(fill=..density..), n=200, contour=FALSE)		#n=resolution; density more sparse
-    plot$layers <- c(stat_density2d(geom="tile", aes(fill=..density..^0.25), n=200, contour=FALSE), plot$layers)#n=resolution; density less sparse 
-    
-    plot <- plot + scale_fill_gradient(low="white", high="black") +
-    #guides(fill=FALSE) +		#remove density legend
-    labs(fill="Density")
-  }
-  #hovertext
-  if(ncol(data)>= 4){
-    hovertext <- paste(x_label, ": ", data[[x_head]], "\n",
-                       y_label, ": ", data[[y_head]], "\n",
-                       z_label, ": ", data[[z_head]]
-                      )
-  }else{
-    hovertext <- paste(x_label, ": ", data[[x_head]], "\n",
-                       y_label, ": ", data[[y_head]]
-                      )
-  }
-  plot <- plot + aes(text = hovertext)
-  
-  
-  return(plot)
-}
-
-#data:
-#   column 1: id
 #   column 2, 3(, 4): x, y(, z)
 create_scatterplot2 <- function(data, round = F, log10 = F, transparency = 1, pointsize = 1, colors = NULL, maxaxis = NULL, x_label = "", y_label = "", z_label = "", density = T, line = T, categorized = F){
   ########## prepare data ##########
@@ -787,19 +632,27 @@ create_scatterplot2 <- function(data, round = F, log10 = F, transparency = 1, po
   #set labelnames if needed
   x_label <- ifelse(nchar(x_label), x_label, x_head)
   y_label <- ifelse(nchar(y_label), y_label, y_head)
-  if(ncol(data) >= 4){ z_head <- ifelse(nchar(z_label), z_label, z_head)}
+  if(ncol(data) >= 4){ z_label <- ifelse(nchar(z_label), z_label, z_head)}
   
   #delete rows where both 0 or at least one NA
-  data <- data[which(as.logical((data[,3] != 0) + (data[,4] != 0)))]
+  data <- data[which(as.logical((data[,2] != 0) + (data[,3] != 0)))]
   
   #round data to Integer
   if(round == TRUE){
-    data[,2:ncol(data)] <- round(data[,2:ncol(data)]) 
+    workon <- unname(which(sapply(data, is.numeric)))
+    #don't use id if numeric
+    workon <- workon[!workon == 1]
+
+    data[, workon] <- round(data[, ..workon]) 
   }
   
   #log10
   if(log10 == TRUE){
-    data[,2:ncol(data)] <- log10(data[,2:ncol(data)])
+    workon <- as.numeric(which(sapply(data, is.numeric)))
+    #don't use id if numeric
+    workon <- workon[!workon == 1]
+    
+    data[, workon] <- log10(data[, ..workon])
   }
   
   #autoscale axis
@@ -826,27 +679,24 @@ create_scatterplot2 <- function(data, round = F, log10 = F, transparency = 1, po
   
   ###z-axis exists?
   if(ncol(data) >= 4){
-    plot <- ggplot(data = data, aes(x = get(x_head),y = get(y_head), color = get(z_head))) #+
-      #set names
-      #aes_(x = as.name(x_head), y = as.name(y_head), color = as.name(z_head))
+    plot <- ggplot(data = data)
     
     ###scatter with color axis
     if(categorized == FALSE){
       plot <- plot +
         ###color_gradient
-        scale_color_gradientn(colors = scatter_color(colors), name = z_label) + 
-        ### point options
-        geom_point(size=pointsize, alpha=transparency)
+        scale_color_gradientn(colors = scatter_color(colors), name = z_label)
       
       ###scatter with categories    
     }else if(categorized == TRUE){
+      #change categorized column to factor
+      data <- data[, (z_head) := as.factor(data[[z_head]])]
+      
       ###categorized plot
       color_vector <- scatter_color(colors)
-      breaks <- seq(from = 1,to = nrow(data), length.out = length(color_vector))
+      #breaks <- seq(from = 1,to = nrow(data), length.out = length(color_vector))
       
       plot <- plot +
-        ### point options
-        geom_point(size=pointsize, alpha=transparency, aes(color = factor(get(z_head)))) +
         
         scale_color_manual (
           #labels = data[,z_head],
@@ -860,9 +710,11 @@ create_scatterplot2 <- function(data, round = F, log10 = F, transparency = 1, po
     #set names
     plot <- plot + aes_(x = as.name(x_head), y = as.name(y_head), color = as.name(z_head))
   }else{
-    plot <- ggplot(data = data, aes(x = get(x_head),y = get(y_head))) +
-      geom_point(size=pointsize, alpha=transparency)
+    plot <- ggplot(data = data, aes_(x = as.name(x_head),y = as.name(y_head))) 
   }
+  
+  #set points
+  plot <- plot + geom_point(size=pointsize, alpha=transparency)
   
   if(line == TRUE){
     ### diagonal line

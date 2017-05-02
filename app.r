@@ -126,8 +126,8 @@ ui <- dashboardPage(
       
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), 
-                 menuSubItem(text = "Scatter", tabName = "scatter", selected = TRUE),
-                 menuSubItem(text = "Category", tabName = "scatter_cat")), # selected needs to be removed 
+                 menuSubItem(text = "Scatter", tabName = "scatter"),
+                 menuSubItem(text = "Category", tabName = "scatter_cat", selected = TRUE)), # selected needs to be removed 
         menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
         menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
@@ -515,7 +515,7 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
       selectedData <- table1[, c(colnames(table1)[1], input$scatter_cat_xaxis, input$scatter_cat_yaxis, input$scatter_cat_zaxis), with = F]
     }
     
-    x <- create_scatterplot(selectedData, input$scatter_cat_round, input$scatter_cat_log10, colors = input$scatter_cat_color, x_label = input$scatter_cat_X_label, y_label = input$scatter_cat_y_label, z_label = input$scatter_cat_z_label, density = input$scatter_cat_density, line = input$scatter_cat_line, categorized = TRUE)
+    x <- create_scatterplot2(selectedData, input$scatter_cat_round, input$scatter_cat_log10, colors = input$scatter_cat_color, x_label = input$scatter_cat_X_label, y_label = input$scatter_cat_y_label, z_label = input$scatter_cat_z_label, density = input$scatter_cat_density, line = input$scatter_cat_line, categorized = TRUE)
     ggplotly(x)
   })
   
