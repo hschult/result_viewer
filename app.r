@@ -15,6 +15,7 @@ library(rje)		#for color palettes
 library(gridExtra)
 library(plotly)
 library(data.table)
+library(heatmaply)
 
 
 
@@ -127,8 +128,8 @@ ui <- dashboardPage(
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")), 
         menuItem("Scatters", tabName = "scatter", icon = icon("area-chart"), 
                  menuSubItem(text = "Scatter", tabName = "scatter"),
-                 menuSubItem(text = "Category", tabName = "scatter_cat", selected = TRUE)), # selected needs to be removed 
-        menuItem("Heatmap", tabName = "heatmap", icon = icon("th")), 
+                 menuSubItem(text = "Category", tabName = "scatter_cat")), # selected needs to be removed 
+        menuItem("Heatmap", tabName = "heatmap", icon = icon("th"), selected = TRUE), 
         menuItem("Geneview", tabName = "genview", icon = icon("bar-chart")),
         menuItem("Enrichment", tabName = "enrichment", icon = icon("cc-mastercard"))
       
@@ -297,7 +298,7 @@ ui <- dashboardPage(
             
             fluidRow(
               tabBox(width = 12, title="Output", id="Output_heatmap",side="right",
-                     tabPanel("Plot", imageOutput("plot_heatmap", height = "100%")),
+                     tabPanel("Plot", plotlyOutput("plot_heatmap", height = "auto", width = "auto")),
                      tabPanel("Table",dataTableOutput("table_heatmap"))
               )
             )
@@ -420,20 +421,11 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
   
   #change plot if button is pressed
   heatmap_plot <- eventReactive(input$heat_plot,{
-    heat_values <- as.data.frame(dataInput_heat()[, 3:ncol(dataInput_heat())])
-    row.names(heat_values) <- dataInput_heat()[[1]]
-    #generate width/height
-    width_height <- heatmap_size(heat_values, input$heat_rowlabel, input$heat_columnlabel, input$heat_clustering)
+    plot <- create_heatmaply(data = dataInput_heat(), clustmethod = input$heat_clustermethod, clustdist = input$heat_clusterdist, clustering = input$heat_clustering, color_vector = input$heat_color)
     
-    outfile <- tempfile(fileext = '.png')
-    png(outfile, width = width_height[1], height = width_height[2], units = "in", res = 72 * session$clientData$pixelratio)
-    #Function Call for Heatmap Plots
-    #color_vector != null
-    plot <-create_complexheatmap(m=heat_values, mode=input$heat_mode, unitlabel=input$heat_unitlabel, rowlabel=input$heat_rowlabel, collabel=input$heat_columnlabel, clustering=input$heat_clustering, clustdist=input$heat_clusterdist, clustmethod=input$heat_clustermethod, distribution=input$heat_distrib, color_vector_onesided=input$heat_color, color_vector_twosided=input$heat_color, reverse_coloring=input$heat_reverse, optimize=T)
-    print(plot)
-    dev.off()
-    
-    list(src = outfile)
+    plot <- heatmaply(plot) %>%
+      layout(autosize = T)
+    #subplot(plot, plot)
   })
 
   #change table if button is pressed
@@ -445,7 +437,7 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
     heatmap_table()
   },options=list(scrollX=TRUE))
   
-  output$plot_heatmap<-renderImage({
+  output$plot_heatmap<-renderPlotly({
     heatmap_plot()
   })
   
