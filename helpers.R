@@ -221,6 +221,33 @@ heatmap_size <- function(data, row_label = T, column_label = T, clustering){
   return(c(width, height))
 }
 
+create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, collabel=T, clustering='none', clustdist='auto', clustmethod='auto', distribution='auto', color_vector=NULL, reverse_coloring=FALSE){
+  # prepare data ------------------------------------------------------------
+  #get color_vector
+  color_vector <- heat_color(color_vector)
+  
+  
+  # plot --------------------------------------------------------------------
+  plot <- heatmapr(data[,3:ncol(data)],
+                   labRow = data[[1]],
+                   labCol = names(data)[3:ncol(data)],
+                   hclust_method = clustmethod,
+                   dist_method = clustdist,
+                   dendrogram = clustering,
+                   colors = color_vector,
+                   cexCol = 20
+                   )
+   
+  return(plot)
+}
+
+
+
+
+
+
+
+
 #---------------------------------------------------------------------------
 #---------------------------------------------------------------------------
 #---------------------------------------------------------------------------
