@@ -253,9 +253,9 @@ ui <- dashboardPage(
             fluidRow(
               box(width=12,title="Inputs",id="heatmap_inputs",
                   column(2,
-                         selectInput("heat_select_row",label="Genes:",multiple=TRUE, choices = genes, selected=genes[1]),
+                         selectInput("heat_select_row",label="Genes:",multiple=TRUE, choices = genes, selected=genes[c(2,3)]),
                     br(),
-                         selectInput("heat_mode",label="Data transformation:",c("raw","log2","zscore"),selected="condition")
+                         selectInput("heat_mode",label="Data transformation:",c("raw","log2","zscore"),selected="raw")
                   ),
                   column(2,
                          selectInput("heat_select_col", label="Columns:", multiple = T, choices = columns_num, selected = columns_num[c(1,2)]) #only numeric selectable
@@ -268,7 +268,7 @@ ui <- dashboardPage(
                   column(2,
                          selectInput("heat_clustering",label="Clustering",c("none", "row", "column", "both"), selected="both"), #both
                          br(),
-                         selectInput("heat_clusterdist",label="Cluster Distance",c("euclidean", "pearson", "spearman", "kendall", "maximum", "manhattan", "canberra", "binary", "minkowski"), selected="manhattan")
+                         selectInput("heat_clusterdist",label="Cluster Distance",c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"), selected="manhattan")
                   ),
                   column(2,
                          selectInput("heat_clustermethod",label="Cluster method",c("average", "ward.D", "ward.D2", "single", "complete", "mcquitty", "median", "centroid"), selected="average"),
@@ -418,16 +418,18 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
     selectedData<- genes[, ..cols]
   })
   
-  
   #change plot if button is pressed
   heatmap_plot <- eventReactive(input$heat_plot,{
     plot <- create_heatmaply(data = dataInput_heat(), clustmethod = input$heat_clustermethod, clustdist = input$heat_clusterdist, clustering = input$heat_clustering, color_vector = input$heat_color)
     
-    plot <- heatmaply(plot) %>%
-      layout(autosize = T)
+    #print(plot)
+    #plot_method "plotly" or row-dendrogram is rotated
+    #plot <- heatmaply(plot, plot_method = "plotly") #%>%layout(margin = c(500,100,100,100))
+    #print(attributes(plot))
+    #plot
     #subplot(plot, plot)
   })
-
+  
   #change table if button is pressed
   heatmap_table <- eventReactive(input$heat_plot, {
     dataInput_heat()

@@ -223,9 +223,12 @@ heatmap_size <- function(data, row_label = T, column_label = T, clustering){
 
 create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, collabel=T, clustering='none', clustdist='auto', clustmethod='auto', distribution='auto', color_vector=NULL, reverse_coloring=FALSE){
   # prepare data ------------------------------------------------------------
-  #get color_vector
-  color_vector <- heat_color(color_vector)
+  #get colorset
+  color_vector=heat_color(color_vector)
   
+  if (reverse_coloring == TRUE){                  #reverse colorset ####not working
+    color_vector = reverse_coloring(color_vector)
+  }
   
   # plot --------------------------------------------------------------------
   plot <- heatmapr(data[,3:ncol(data)],
@@ -233,11 +236,16 @@ create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, col
                    labCol = names(data)[3:ncol(data)],
                    hclust_method = clustmethod,
                    dist_method = clustdist,
-                   dendrogram = clustering,
-                   colors = color_vector,
-                   cexCol = 20
+                   dendrogram = clustering
+                   #colors =  heat.colors(10)#for some reason not passed to heatmaply()
+                   #cexCol = 20
                    )
-   
+  
+  plot <- heatmaply(plot,
+                    plot_method = "plotly",
+                    colors = color_vector
+                    )
+  
   return(plot)
 }
 
