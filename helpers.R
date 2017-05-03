@@ -230,21 +230,32 @@ create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, col
     color_vector = reverse_coloring(color_vector)
   }
   
+  #estimate label sizes
+  #row label
+  rowlabel_size <- max(nchar(data[[1]]), na.rm = T) * 8
+  collabel_size <- max(nchar(names(data)[3:ncol(data)]), na.rm = T) * 5
+  
   # plot --------------------------------------------------------------------
+  #data
   plot <- heatmapr(data[,3:ncol(data)],
                    labRow = data[[1]],
                    labCol = names(data)[3:ncol(data)],
                    hclust_method = clustmethod,
                    dist_method = clustdist,
-                   dendrogram = clustering
+                   dendrogram = clustering,
+                   reversescale = reverse_coloring
                    #colors =  heat.colors(10)#for some reason not passed to heatmaply()
                    #cexCol = 20
                    )
-  
+
+  #layout
   plot <- heatmaply(plot,
                     plot_method = "plotly",
                     colors = color_vector
-                    )
+                    ) %>% 
+                    layout(margin = list(l = rowlabel_size, b = collabel_size)
+                           
+                           )
   
   return(plot)
 }

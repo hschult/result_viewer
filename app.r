@@ -420,7 +420,13 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
   
   #change plot if button is pressed
   heatmap_plot <- eventReactive(input$heat_plot,{
-    plot <- create_heatmaply(data = dataInput_heat(), clustmethod = input$heat_clustermethod, clustdist = input$heat_clusterdist, clustering = input$heat_clustering, color_vector = input$heat_color)
+    plot <- create_heatmaply(data = dataInput_heat(),
+                             clustmethod = input$heat_clustermethod,
+                             clustdist = input$heat_clusterdist,
+                             clustering = input$heat_clustering,
+                             color_vector = input$heat_color,
+                             reverse_coloring = input$heat_reverse
+                             )
     
     #print(plot)
     #plot_method "plotly" or row-dendrogram is rotated
