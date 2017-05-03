@@ -233,7 +233,10 @@ create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, col
   #estimate label sizes
   #row label
   rowlabel_size <- max(nchar(data[[1]]), na.rm = T) * 8
+  #column label
   collabel_size <- max(nchar(names(data)[3:ncol(data)]), na.rm = T) * 5
+  #legend
+  legend <- nchar(max(data[,3:ncol(data)])) * 8
   
   # plot --------------------------------------------------------------------
   #data
@@ -243,20 +246,26 @@ create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, col
                    hclust_method = clustmethod,
                    dist_method = clustdist,
                    dendrogram = clustering,
-                   reversescale = reverse_coloring
+                   reversescale = reverse_coloring,
+                   
                    #colors =  heat.colors(10)#for some reason not passed to heatmaply()
                    #cexCol = 20
                    )
 
+  print(collabel)
+  print(rowlabel)
   #layout
   plot <- heatmaply(plot,
                     plot_method = "plotly",
                     colors = color_vector
                     ) %>% 
-                    layout(margin = list(l = rowlabel_size, b = collabel_size)
-                           
-                           )
-  
+                    layout(margin = list(l = rowlabel_size, b = collabel_size, r = legend),
+                           xaxis = list(showticklabels = collabel)#,
+                           #x$data[[3]]$yaxis = list(showticklabels = rowlabel)
+                    ) %>%
+                    colorbar(title = unitlabel, yanchor = "middle")
+  #print(plot$x$data) ################TODO y-axis label
+  #str(plot$x$data[[3]])
   return(plot)
 }
 

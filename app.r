@@ -425,7 +425,10 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
                              clustdist = input$heat_clusterdist,
                              clustering = input$heat_clustering,
                              color_vector = input$heat_color,
-                             reverse_coloring = input$heat_reverse
+                             reverse_coloring = input$heat_reverse,
+                             rowlabel = input$heat_rowlabel,
+                             collabel = input$heat_columnlabel,
+                             unitlabel = input$heat_unitlabel
                              )
     
     #print(plot)
