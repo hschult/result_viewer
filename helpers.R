@@ -247,19 +247,22 @@ create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, col
                    dist_method = clustdist,
                    dendrogram = clustering,
                    reversescale = reverse_coloring
-                   
                    #colors =  heat.colors(10)#for some reason not passed to heatmaply()
                    #cexCol = 20
                    )
 
 
+  height <- rowlabel_size + nrow(data) * 20
   #layout
   plot <- heatmaply(plot,
                     plot_method = "plotly",
                     colors = color_vector
                     ) %>% 
                     layout(margin = list(l = rowlabel_size, b = collabel_size, r = legend),
-                           legend = list(yanchor = "middle")
+                           legend = list(yanchor = "middle"),
+                           autosize = T#,
+                           #width = collabel_size + (legend + 130) + ncol(data[,3:ncol(data)]) * 40, #45
+                           #height = ifelse(height < 450, 450, height)
                     ) %>%
                     colorbar(title = unitlabel, yanchor = "middle")
                     #TODO find out which yanchor controls colorbar 
@@ -280,12 +283,15 @@ create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, col
     plot <- plot %>% layout(xaxis2 = list(showticklabels = F)
                            )
   }else if(clustering == "column"){
-    plot <- plot %>% layout(yaxis2 = list(showticklabels = F)
+    plot <- plot %>% layout(yaxis = list(showticklabels = F)
     )
   }
   
   #print(plot) ################TODO y-axis label
-  str(plot$x)
+  #plot$width <- ncol(data[,3:ncol(data)])*10
+  #plot$height <- nrow(data)
+  
+  str(plot)
   return(plot)
 }
 

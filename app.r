@@ -297,7 +297,7 @@ ui <- dashboardPage(
             
             
             fluidRow(
-              tabBox(width = 12, title="Output", id="Output_heatmap",side="right",
+              tabBox(width = NULL, height = NULL, title="Output", id="Output_heatmap",side="right", 
                      tabPanel("Plot", plotlyOutput("plot_heatmap", height = "auto", width = "auto")),
                      tabPanel("Table",dataTableOutput("table_heatmap"))
               )
