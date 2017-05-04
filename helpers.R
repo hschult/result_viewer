@@ -246,26 +246,46 @@ create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, col
                    hclust_method = clustmethod,
                    dist_method = clustdist,
                    dendrogram = clustering,
-                   reversescale = reverse_coloring,
+                   reversescale = reverse_coloring
                    
                    #colors =  heat.colors(10)#for some reason not passed to heatmaply()
                    #cexCol = 20
                    )
 
-  print(collabel)
-  print(rowlabel)
+
   #layout
   plot <- heatmaply(plot,
                     plot_method = "plotly",
                     colors = color_vector
                     ) %>% 
                     layout(margin = list(l = rowlabel_size, b = collabel_size, r = legend),
-                           xaxis = list(showticklabels = collabel)#,
-                           #x$data[[3]]$yaxis = list(showticklabels = rowlabel)
+                           legend = list(yanchor = "middle")
                     ) %>%
                     colorbar(title = unitlabel, yanchor = "middle")
-  #print(plot$x$data) ################TODO y-axis label
-  #str(plot$x$data[[3]])
+                    #TODO find out which yanchor controls colorbar 
+  
+  #address correct axis
+  if(clustering == "both" || clustering == "column"){
+    plot <- plot %>% layout(xaxis = list(showticklabels = collabel),
+                            yaxis2 = list(showticklabels = rowlabel)
+                            )
+  }else if(clustering == "row" || clustering == "none"){
+    plot <- plot %>% layout(xaxis = list(showticklabels = collabel),
+                            yaxis = list(showticklabels = rowlabel)
+    )
+  }
+  
+  #don't show dendrogram ticks
+  if(clustering == "row"){
+    plot <- plot %>% layout(xaxis2 = list(showticklabels = F)
+                           )
+  }else if(clustering == "column"){
+    plot <- plot %>% layout(yaxis2 = list(showticklabels = F)
+    )
+  }
+  
+  #print(plot) ################TODO y-axis label
+  str(plot$x)
   return(plot)
 }
 
