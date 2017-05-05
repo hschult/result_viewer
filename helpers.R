@@ -3,144 +3,6 @@
 #---------------------------------------------------------------------------
 #Functions
 
-
-create_complexheatmap=function(m, mode="raw", unitlabel='auto', rowlabel=T, collabel=T, clustering='none', clustdist='auto', clustmethod='auto', distribution='auto', color_vector_onesided=NULL, color_vector_twosided=NULL, reverse_coloring=FALSE, optimize=T)
-{
-  ### subset of parameters available for complexheatmap:
-  #name="legend"					#title of legend
-  #cluster_columns=TRUE				#skip clustering for columns = no reordering of columns
-  #cluster_rows=TRUE				#skip clustering for rows = no reordering of rows
-  #show_column_dend=TRUE				#show column dendrogram
-  #show_row_dend=TRUE				#show row dendrogram
-  #column_dend_height=unit(2,"cm")		#height of dendrogram
-  #clustering_distance_rows="euclidean"		#euclidean, pearson, spearman, kendall, maximum, manhattan, canberra, binary, minkowski
-  #clustering_method_rows="complete"		#ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
-  #show_column_dend=T				#show dendrogram
-  #show_row_dend=T				#show dendrogram
-  #show_row_names=TRUE				#show row names
-  #row_names_gp=gpar(fontsize=20))		#increase row names font size
-  #km=2						#apply kmeans clustering on rows
-  #split=...					#manually split rows into cluster
-  #row_names_max_width=unit(3,"cm")		#size for row names
-  #column_names_max_height=unit(3,"cm")		#size for column names
-  #column_title					#headline for each heatmap
-  #width						#width for each heatmap
-  #na_col="grey"					#color for na values
-  #column_names_gp = gpar(fontsize=8)		#set column label font size
-  #row_names_gp = gpar(fontsize=8)		#set row label font size
-  
-  ### transform matrix according to mode (log2, zscore), set special distance function for mode=zscore, create labels
-  if (mode == "zscore"){
-    m <- t(scale(t(m)))
-    
-  }else if (mode == "log2"){
-    m <- m + 1
-    m <- log2(m)
-  }
-  
-  #replace inf->NA->0
-  is.na(m) <- sapply(m, is.infinite)
-  m[is.na(m)] <- 0
-  
-  ### mapping of colors to min/max value depending on distribution type (one- or two-sided)
-  min=min(m, na.rm = TRUE)
-  absmin=abs(min(m, na.rm = TRUE))
-  max=max(m, na.rm = TRUE)
-  absmax=abs(max(m, na.rm = TRUE))
-  totalmax=max(absmax, absmin)
-  message(paste("value min: ", min, sep="\t"))
-  message(paste("value max: ", max, sep="\t"))
-  if (distribution=='auto') {
-    if (min<0 && max>0) {						#two-sided distribution: eg. zscore, log2fc
-      distribution='two-sided'
-    } else {							#one-sided distribution: eg. count, log2 count
-      distribution='one-sided'
-    }
-  }
-  if (distribution=='two-sided') {
-    color_vector=heat_color(color_vector_twosided)
-  } else {
-    color_vector=heat_color(color_vector_onesided)
-  }
-
-  if (reverse_coloring == TRUE){                  #reverse colorset
-    color_vector = reverse_coloring(color_vector)
-  }
-  
-  message("distribution: ", distribution)
-  color_vector_n=length(color_vector)					#number of colors in vector
-  maxlimit=max
-  minlimit=min
-  if (optimize==T && distribution=='two-sided'){				#try to create better color breaks (identical min/max for two-sided, reasonable rounding)
-    maxlimit=max(absmax, absmin)
-    minlimit= -maxlimit
-  }
-  
-  #catch error minlimit == maxlimit -> no break-vlaues
-  if(minlimit == maxlimit){
-    maxlimit <- maxlimit + 1
-  }
-  
-  breaks=seq(minlimit,maxlimit,length=color_vector_n)#one break point for each color; even distribution between min/max
-  message(paste("breaks min: ", minlimit, sep="\t"))
-  message(paste("breaks max: ", maxlimit, sep="\t"))
-  col_fun=colorRamp2(breaks,color_vector)					#create color mapping function to fix limits/breaks
-  
-  ### clustering
-  if (clustering=='none') {
-    cluster_rows=F
-    cluster_columns=F
-  } else if (clustering=='row') {
-    cluster_rows=T
-    cluster_columns=F
-  } else if (clustering=='column') {
-    cluster_rows=F
-    cluster_columns=T
-  } else if (clustering=='both') {
-    cluster_rows=T
-    cluster_columns=T
-  }
-  
-  ### plot
-  ht1 = Heatmap(m,
-                name=unitlabel,
-                column_title=NULL,
-                col=col_fun,
-                cluster_rows=cluster_rows,
-                cluster_columns=cluster_columns,
-                clustering_distance_rows=clustdist,
-                clustering_distance_columns=clustdist,
-                clustering_method_rows=clustmethod,
-                clustering_method_columns=clustmethod,
-                show_row_names=rowlabel,
-                show_column_names=collabel,
-                row_names_side="right",
-                row_dend_side="left",
-                row_dend_width= unit(1,"inches"),
-                column_dend_height= unit(1,"inches"),
-                row_names_max_width= unit(8,"inches"),
-                column_names_max_height= unit(4,"inches"),
-                row_names_gp=gpar(fontsize=12),
-                column_names_gp=gpar(fontsize=12),
-                #show_heatmap_legend = F,
-                #raster_device = "png",
-                #width=unit({
-                #  0.5*ncol(m)
-                #}, "cm"),
-                #rect_gp = gpar(lineheight = 50, lwd = NA),
-                #cell_fun = function(j, i, x, y, width, height, fill){
-                #  grid.rect(x = x, y = y, width = width, height = height*0.5, gp = gpar(fill = fill, col = NA))
-                #  }, 
-                heatmap_legend_param=list(
-                  color_bar="continuous", 			#continuous, discrete
-                  legend_direction="vertical"			#horizontal, vertical
-                )
-  )
-  
-  return(ht1)
-}
-
-
 # heat_color --------------------------------------------------------------
 
 heat_color <- function(palette){
@@ -165,64 +27,23 @@ heat_color <- function(palette){
        )
 }
 
-
-# reverse_coloring --------------------------------------------------------
-
-reverse_coloring <- function(colors){
-  rev(colors)
-}
-
-
-# heatmap_size ------------------------------------------------------------
-
-heatmap_size <- function(data, row_label = T, column_label = T, clustering){
-  col_names_maxlength_label_width=max(sapply(colnames(data),strwidth, units="in", font=12))	#longest column label when plotted in inches	
-  col_names_maxlength_label_height=max(sapply(colnames(data),strheight, units="in", font=12))	#highest column label when plotted in inches	
-  row_names_maxlength_label_width=max(sapply(rownames(data),strwidth, units="in", font=12))	#longest row label when plotted in inches	
-  row_names_maxlength_label_height=max(sapply(rownames(data),strheight, units="in", font=12))	#highest row label when plotted in inches
-  col_count <- ncol(data)
-  row_count <- nrow(data)
-  
-  #message("colWidth: ", col_names_maxlength_label_width)
-  #message("colheight: ", col_names_maxlength_label_height)
-  
-  #unit: inches
-  width <- 0
-  height <- 0.15
-  
-  #legend
-  width <- width + 1
-  
-  #labels
-  if(row_label == TRUE){
-    width <- width + row_names_maxlength_label_width + 0.09
-  }
-  if(column_label == TRUE){
-    height <- height + col_names_maxlength_label_width
-  }
-  
-  #clustering c("none", "row", "column", "both")
-  if(clustering == "row" && row_count > 1){
-    width <- width + 2
-  }else if(clustering == "column" && col_count > 1){
-    height <- height + 1
-  }else if(clustering == "both"){
-    if(row_count > 1){width <- width + 2}
-    if(col_count > 1){height <- height + 1}
-  }
-  
-  #entries
-  
-  width <- width + col_count * (col_names_maxlength_label_height + 0.06)
-  height <- height + row_count * (row_names_maxlength_label_height + 0.08)
-  
-  #message("width: ", width)
-  #message("height: ", height)
-  return(c(width, height))
-}
-
 create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, collabel=T, clustering='none', clustdist='auto', clustmethod='auto', distribution='auto', color_vector=NULL, reverse_coloring=FALSE){
   # prepare data ------------------------------------------------------------
+  ### transform matrix according to mode (log2, zscore), set special distance function for mode=zscore
+  if (mode == "zscore"){
+    lapply(data[,3:ncol(data)], as.double)
+    temp <- t(scale(t(as.matrix(data[,3:ncol(data)]))))
+    data[, colnames(temp)] <- as.data.table(temp)
+    
+  }else if (mode == "log2"){
+    data[,3:ncol(data)] <- data[,3:ncol(data)] + 1
+    data[,3:ncol(data)] <- log2(data[,3:ncol(data)])
+  }
+  
+  #replace inf->NA->0
+  is.na(data) <- sapply(data, is.infinite)
+  data[is.na(data)] <- 0
+  
   #get colorset
   color_vector=heat_color(color_vector)
   
@@ -251,20 +72,15 @@ create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, col
                    #cexCol = 20
                    )
 
-
-  height <- rowlabel_size + nrow(data) * 20
   #layout
   plot <- heatmaply(plot,
                     plot_method = "plotly",
-                    colors = color_vector
+                    colors = color_vector,
+                    colorbar_yanchor = "middle"
                     ) %>% 
-                    layout(margin = list(l = rowlabel_size, b = collabel_size, r = legend),
-                           legend = list(yanchor = "middle"),
-                           autosize = T#,
-                           #width = collabel_size + (legend + 130) + ncol(data[,3:ncol(data)]) * 40, #45
-                           #height = ifelse(height < 450, 450, height)
+                    layout(margin = list(l = rowlabel_size, b = collabel_size, r = legend)
                     ) %>%
-                    colorbar(title = unitlabel, yanchor = "middle")
+                    colorbar(title = unitlabel)
                     #TODO find out which yanchor controls colorbar 
   
   #address correct axis
@@ -287,11 +103,6 @@ create_heatmaply <- function(data, mode="raw", unitlabel='auto', rowlabel=T, col
     )
   }
   
-  #print(plot) ################TODO y-axis label
-  #plot$width <- ncol(data[,3:ncol(data)])*10
-  #plot$height <- nrow(data)
-  
-  str(plot)
   return(plot)
 }
 

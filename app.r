@@ -298,7 +298,7 @@ ui <- dashboardPage(
             
             fluidRow(
               tabBox(width = NULL, height = NULL, title="Output", id="Output_heatmap",side="right", 
-                     tabPanel("Plot", plotlyOutput("plot_heatmap", height = "auto", width = "auto")),
+                     tabPanel("Plot", plotlyOutput("plot_heatmap", height = 700, width = "auto")),
                      tabPanel("Table",dataTableOutput("table_heatmap"))
               )
             )
@@ -428,7 +428,8 @@ server <- function(input, output, session) {  source("helpers.R") #for dev purpo
                              reverse_coloring = input$heat_reverse,
                              rowlabel = input$heat_rowlabel,
                              collabel = input$heat_columnlabel,
-                             unitlabel = input$heat_unitlabel
+                             unitlabel = input$heat_unitlabel,
+                             mode = input$heat_mode
                              )
     
     #print(plot)
